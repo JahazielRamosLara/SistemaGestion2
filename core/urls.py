@@ -5,7 +5,7 @@ app_name = "core"
 
 urlpatterns = [
     path("captura/", views.CapturaDocumentoView.as_view(), name = "captura_documento"),
-    path("notificar/<int:pk>/", views.notificar_documento, name = "notificar_documento"),
+    #path("notificar/<int:pk>/", views.notificar_documento, name = "notificar_documento"),
     path("tramite/<int:pk>/", views.iniciar_tramite, name = "iniciar_tramite"),
     path("contestar_memo/<int:pk>/", views.devolver_para_contestar, name = "devolver_para_contestar"),
     path("responsable/turnar/<int:pk>/", views.turnar_documento, name = "turnar_documento"),

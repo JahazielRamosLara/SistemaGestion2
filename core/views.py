@@ -18,6 +18,7 @@ from django.template.loader import render_to_string
 from django.contrib.auth.models import Group
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
+from .utils import enviar_notificacion_documento
 
 # Create your views here.
 
@@ -61,12 +62,12 @@ class CapturaDocumentoView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
         self.object.captura_por = self.request.user 
         
         try:
-            estatus_capturado = Estatus.objects.get(nombre="Capturado")
+            estatus_notificado = Estatus.objects.get(nombre = "Notificado")
         except Estatus.DoesNotExist:
             messages.error(self.request, 'Error al guardar: El estatus "Capturado" no existe en la base de datos.')
             return self.form_invalid(form)
 
-        self.object.estatus_actual = estatus_capturado
+        self.object.estatus_actual = estatus_notificado
         self.object.save()
         
         form.save_m2m()
@@ -89,6 +90,11 @@ class CapturaDocumentoView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
                 nuevo_estatus=self.object.estatus_actual,
                 comentario=f"Documento capturado y notificado a {responsable_adicional.username} como responsable adicional por {self.request.user.username}."
             )
+
+        todos_responsables = [self.object.responsable] + list(responsables_adicionales)
+        correo_enviado = enviar_notificacion_documento(self.object, todos_responsables)
+        nombres_adicionales = ", ".join([user.username for user in responsables_adicionales])
+
         nombres_adicionales = ", ".join([user.username for user in responsables_adicionales])
 
         if responsables_adicionales:
@@ -96,6 +102,11 @@ class CapturaDocumentoView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
         else:
             mensaje = f'Documento {self.object.folio} capturado y notificado a {self.object.responsable.username}.'
         
+        if correo_enviado:
+            mensaje += " Correos enviados."
+        else:
+            mensaje += "No se pudieron enviar los correos (verifica que los usuarios tengan email)."
+
         messages.success(self.request, mensaje)
 
         return super().form_valid(form)
@@ -129,7 +140,7 @@ class DashboardResponsableView(LoginRequiredMixin, UserPassesTestMixin, ListView
     
     def get_queryset(self):
         
-        estados_gestion_responsable = ["Notificado", "En Trámite", "Turnado", "Terminado"]
+        estados_gestion_responsable = ["Capturado", "En Trámite", "Turnado", "Terminado"]
 
         return Documento.objects.filter(
             Q(responsable=self.request.user) | Q(responsables_adicionales=self.request.user),
@@ -222,7 +233,7 @@ class RemitenteCreateView(LoginRequiredMixin, CreateView):
         
         return super().form_invalid(form)
     
-@user_passes_test(is_secretaria)
+"""@user_passes_test(is_secretaria)
 @transaction.atomic
 def notificar_documento(request, pk):
 
@@ -247,7 +258,7 @@ def notificar_documento(request, pk):
     
     messages.success(request, f"Folio {documento.folio} notificado con éxito.")
     return redirect("core:dashboard_secretaria")
-
+"""
 @user_passes_test(is_responsable)
 @transaction.atomic
 def iniciar_tramite(request, pk):
