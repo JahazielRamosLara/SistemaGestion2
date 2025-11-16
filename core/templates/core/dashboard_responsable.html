@@ -1,0 +1,78 @@
+{% extends 'base.html' %} 
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Panel de Gestión - {{ user.username }} </h2>
+    <p>Oficios asignados para seguimiento y trámite.</p>
+    
+    {% if messages %}
+        <ul class="messages list-unstyled">
+            {% for message in messages %}
+            <li class="alert alert-{{ message.tags }}">{{ message }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
+    <div class="table-responsive">
+        <table class="table table-striped table-hover">
+            <thead class="table-dark">
+                <tr>
+                    <th>Folio</th>
+                    <th>Asunto</th>
+                    <th>Estatus Actual</th>
+                    <th>Rol</th> <!-- NUEVO -->
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for documento in documentos %}
+                <tr>
+                    <td>{{ documento.folio }}</td>
+                    <td><a href="{% url 'core:detalle_documento' pk=documento.pk %}">{{ documento.asunto|truncatechars:70 }}</a></td>
+                    <td>
+                        <span class="badge bg-warning text-dark">{{ documento.estatus_actual.nombre }}</span>
+                    </td>
+                    
+                    <!-- NUEVO: Mostrar si es responsable principal o adicional -->
+                    <td>
+                        {% if documento.responsable == user %}
+                            <span class="badge bg-primary">Principal</span>
+                        {% else %}
+                            <span class="badge bg-info">Adicional</span>
+                        {% endif %}
+                    </td>
+                    
+                    <td>
+                        {# Lógica de Botones #}
+                        
+                        {# Si el estado es 'Notificado' (recién llegado), solo puede iniciar trámite #}
+                        {% if documento.estatus_actual.nombre == 'Notificado' %}
+                            <a href="{% url 'core:iniciar_tramite' pk=documento.pk %}" 
+                               class="btn btn-success btn-sm me-1">
+                                Iniciar Trámite 
+                            </a>
+                        
+                        {# Si ya está en trámite o turnado, puede turnar o devolver para contestar #}
+                        {% elif documento.estatus_actual.nombre == 'En Trámite' or documento.estatus_actual.nombre == 'Turnado' %}
+                            
+                            <a href="{% url 'core:devolver_para_contestar' pk=documento.pk %}" 
+                               class="btn btn-danger btn-sm"
+                               onclick="return confirm('¿Confirma que el requerimiento está listo y debe ser contestado?');">
+                                Contestar por Memo 
+                            </a>
+                            
+                        {% elif documento.estatus_actual.nombre == 'Terminado' %}
+                             <p class="text-success small">Esperando acción de otra área.</p>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="text-center">No tiene documentos asignados para seguimiento.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock content %}

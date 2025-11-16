@@ -1,0 +1,228 @@
+{% extends "base.html" %}
+
+{% block title %}Captura de Documento{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-12 offset-md-0">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"> Nuevo Documento</h4>
+                </div>
+                <div class="card-body px-4 py-2">
+                    
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+                        {% endfor %}
+                    {% endif %}
+
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+
+                        <div class="row">
+                            <div class="col-md-1 py-2">
+                                <div class="form-group">
+                                    <label for="{{ form.folio.id_for_label }}">Folio:</label>
+                                    {{ form.folio }}
+                                </div>
+                            </div>
+                            <div class="form-group py-2">
+                                <div class="form-group col-md-8">
+                                    <label for="{{ form.remitente.id_for_label }}">Remitente:</label>
+                                    <div class="input-group">
+            
+                                        {# El campo de selección del Remitente #}
+                                        {{ form.remitente }}
+
+
+                                        <div class="input-group-append mx-3">
+                                        {# Botón que abre el modal para crear nuevo Remitente - Justo a la derecha del de Gestión #}
+                                            <button type="button" class="btn btn-primary me-0" data-bs-toggle="modal" data-bs-target="#modal-remitente" title="Crear Nuevo Remitente">
+                                                <i class="fas fa-plus"></i>
+                                            </button>
+                                        </div>
+                                        {# Botón de Gestión de Remitentes (Ícono) - Justo a la derecha del SELECT #}
+                                        <div class="input-group-append">
+                                            <a href="{% url 'core:gestion_remitentes' %}" class="btn btn-primary" title="Gestionar Remitentes">
+                                                <i class="fas fa-list"></i> 
+                                            </a>
+                                        </div>
+                                    </div>
+                                    {% if form.remitente.errors %}
+                                        <small class="text-danger">{{ form.remitente.errors }}</small>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group py-2">
+                            <label for="{{ form.asunto.id_for_label }}">Asunto:</label>
+                            {{ form.asunto }}
+                        </div>
+                        <div class="form-group py-2">
+                            <label for="{{ form.resumen.id_for_label }}">Resumen:</label>
+                            {{ form.resumen }}
+                        </div>
+
+                        <div class="form-group py-4">
+                            <label for="{{ form.archivo_pdf.id_for_label }}"></label>
+                            {{ form.archivo_pdf }}
+                            {% if form.archivo_pdf.errors %}
+                                <small class="text-danger d-block">{{ form.archivo_pdf.errors }}</small>
+                            {% endif %}
+                        </div>
+
+                        <div class="col-md-8">
+                            <div class="form-group">
+                                <label for="{{ form.responsable.id_for_label }}">Responsable:</label>
+                                <div class="input-group">
+                                    {{ form.responsable }}
+                                </div>
+                                {% if form.responsable.errors %}
+                                    <small class="text-danger">{{ form.responsable.errors }}</small>
+                                {% endif %}
+                            </div>
+                        </div>
+                                    
+                        {# 2. Contenedor OCULTO para el campo "Otros" #}
+                        <div id="otros-container" style="display: none;">
+                            <div class="row py-2">
+                                <div class="form-group col-md-8">
+                                    <label for="{{ form.responsables_adicionales.id_for_label }}">Otros:</label>
+                                    <div class="input-group">
+                                        {# El campo de selección de Responsables Adicionales #}
+                                        {{ form.responsables_adicionales }}
+                                    </div>
+                                    {% if form.responsables_adicionales.errors %}
+                                        <small class="text-danger">{{ form.responsables_adicionales.errors }}</small>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-end mt-4 py-3">
+                            <button type="submit" class="btn btn-primary btn-lg me-3">Guardar Documento</button>
+                            <a href="{% url 'core:dashboard_secretaria' %}" class="btn btn-secondary btn-lg">
+                                Cancelar
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+{% include 'core/remitente_modal.html' %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    
+    // ========== MANEJO DEL MODAL DE REMITENTE ==========
+    $(document).on("submit", "#remitente-form", function(e) {
+        e.preventDefault();
+
+        const form = $(this);
+        const url = form.attr("action");
+        const data = form.serialize(); 
+        const errorMessageDiv = $('#modal-error-message');
+        
+        errorMessageDiv.hide().empty(); 
+        
+        const saveButton = $('#btn-guardar-remitente');
+        saveButton.prop('disabled', true).text('Guardando...');
+
+        $.ajax({
+            type: "POST",
+            url: url,
+            data: data,
+            headers: {
+                "X-Requested-With": "XMLHttpRequest" 
+            },
+            success: function(response) {
+                saveButton.prop('disabled', false).text('Guardar Remitente');
+                
+                if (response.id && response.nombre) {
+                    $('#modal-remitente').modal('hide'); 
+                    
+                    const selectRemitente = $('#id_remitente');
+                    const newOption = new Option(response.nombre, response.id, true, true);
+                    selectRemitente.append(newOption).trigger('change'); 
+                    
+                    form[0].reset();
+                }
+            },
+            error: function(xhr, status, error) {
+                saveButton.prop('disabled', false).text('Guardar Remitente');
+                
+                if (xhr.status === 400 && xhr.responseJSON && xhr.responseJSON.error) {
+                    errorMessageDiv.text(xhr.responseJSON.error).show();
+                } else if (xhr.status === 400) {
+                    errorMessageDiv.text("Error de validación: El campo es obligatorio o el valor es inválido.").show();
+                } else if (xhr.status === 500) {
+                    errorMessageDiv.text("Error interno del servidor.").show();
+                } else {
+                    errorMessageDiv.text("Ocurrió un error inesperado al guardar.").show();
+                }
+            }
+        });
+    });
+    
+    // ========== INICIALIZAR SELECT2 ==========
+    $('#id_remitente').select2({
+        theme: "bootstrap-5",
+        placeholder: "---------",
+        allowClear: true
+    }); 
+    
+    $('#id_responsable').select2({
+        theme: "bootstrap-5",
+        placeholder: "---------",
+        allowClear: true
+    });
+    $('#id_responsables_adicionales').select2({
+    theme: "bootstrap-5",
+    placeholder: "Selecciona responsables adicionales",
+    allowClear: true,
+    multiple: true,  // Permite selección múltiple
+    width: '100%'    // Asegura que ocupe todo el ancho disponible
+    });
+    // ========== MOSTRAR/OCULTAR CAMPO "OTROS" ==========
+    const $responsableSelect = $('#id_responsable');
+    const $otrosContainer = $('#otros-container');
+    
+    function toggleOtrosField() {
+    const valorSeleccionado = $responsableSelect.val();
+    console.log('Valor seleccionado:', valorSeleccionado);
+    console.log('Tipo de dato:', typeof valorSeleccionado);
+    
+    // Verificar que el valor no sea null, undefined, vacío o el placeholder
+    if (valorSeleccionado !== null && 
+        valorSeleccionado !== undefined && 
+        valorSeleccionado !== '' && 
+        String(valorSeleccionado).trim() !== '') {
+        
+        $otrosContainer.slideDown(300);
+        console.log('✅ Mostrando campo Otros');
+    } else {
+        $otrosContainer.slideUp(300);
+        console.log('❌ Ocultando campo Otros - valor inválido');
+    }
+}
+    
+    // Ejecutar al cargar
+    toggleOtrosField();
+    
+    // Ejecutar al cambiar (eventos de Select2)
+    $responsableSelect.on('select2:select select2:clear change', function() {
+        console.log('Cambio detectado en responsable');
+        toggleOtrosField();
+    });
+});
+</script>
+{% endblock %}
+{% endblock %}

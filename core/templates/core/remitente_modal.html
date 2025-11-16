@@ -1,0 +1,66 @@
+{# Este es el contenido que debes pegar en tu archivo remitente_modal.html #}
+
+<div class="modal fade" id="modal-remitente" tabindex="-1" aria-labelledby="remitenteModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            
+            <form id="remitente-form" method="post" action="{% url 'core:crear_remitente' %}">
+                {% csrf_token %}
+
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title" id="remitenteModalLabel">Crear Nuevo Remitente</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+
+                <div class="modal-body">
+                    <div id="modal-error-message" class="alert alert-danger" style="display:none;"></div>
+
+                    {% if remitente_form %}
+                        
+                        {# 1. Campo TRATO #}
+                        <div class="form-group mb-3">
+                            <label for="id_trato">Trato:</label>
+                            
+                            <select name="trato" id="id_trato" class="form-select" required>
+                                {% for value, label in remitente_form.trato.field.choices %}
+                                    <option value="{{ value }}">{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                            
+                            {% if remitente_form.trato.errors %}
+                                <div class="text-danger">{{ remitente_form.trato.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        {# 2. Campo NOMBRE #}
+                        <div class="form-group mb-3">
+                            <label for="{{ remitente_form.nombre.id_for_label }}">Nombre:</label>
+                            {{ remitente_form.nombre }}
+                            {% if remitente_form.nombre.errors %}
+                                <div class="text-danger">{{ remitente_form.nombre.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        {# 3. Campo ÁREA #}
+                        <div class="form-group mb-3">
+                            <label for="{{ remitente_form.area.id_for_label }}">Área (Opcional):</label>
+                            {{ remitente_form.area }}
+                            {% if remitente_form.area.errors %}
+                                <div class="text-danger">{{ remitente_form.area.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                    {% else %}
+                        {# Fallback si el formulario no se pasa al contexto, aunque no debería ocurrir si usas AJAX #}
+                        <p class="text-danger">Error: El formulario de remitente no está disponible.</p>
+                    {% endif %}
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-success" id="btn-guardar-remitente">Guardar Remitente</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

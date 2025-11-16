@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% load widget_tweaks %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2>Turnar Documento: Folio {{ documento.folio }}</h2>
+    <p>Documento actual responsable: <strong>{{ documento.responsable.get_full_name|default:documento.responsable.username }}</strong>. Estatus actual: <strong>{{ documento.estatus_actual.nombre }}</strong>.</p>
+
+    <form method="post" class="row g-3 bg-light p-4 rounded shadow-sm">
+        {% csrf_token %}
+
+        <div class="col-12 mb-3">
+            <label for="{{ form.responsable.id_for_label }}" class="form-label">Responsable Destino</label>
+            {{ form.responsable|add_class:"form-control" }}
+            {% if form.responsable.errors %}<div class="text-danger small">{{ form.responsable.errors }}</div>{% endif %}
+        </div>
+        
+        <div class="col-12 mb-3">
+            <label for="{{ form.estatus_actual.id_for_label }}" class="form-label">Nuevo Estatus</label>
+            {{ form.estatus_actual|add_class:"form-control" }}
+            {% if form.estatus_actual.errors %}<div class="text-danger small">{{ form.estatus_actual.errors }}</div>{% endif %}
+        </div>
+
+        <div class="col-12 mb-3">
+            <label for="{{ form.comentario.id_for_label }}" class="form-label">Comentarios del Turno (Auditoría)</label>
+            {{ form.comentario|add_class:"form-control"|attr:"rows:3" }}
+            {% if form.comentario.errors %}<div class="text-danger small">{{ form.comentario.errors }}</div>{% endif %}
+        </div>
+
+        <div class="col-12 text-end">
+            <button type="submit" class="btn btn-primary mt-4">Confirmar Turno y Auditar</button>
+            <a href="{% url 'dashboard_responsable' %}" class="btn btn-secondary mt-4">Cancelar</a>
+        </div>
+    </form>
+</div>
+{% endblock content %}

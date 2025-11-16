@@ -1,0 +1,51 @@
+{% extends 'base.html' %} 
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card shadow">
+        <div class="card-header bg-primary text-white">
+            <h3 class="mb-0">Detalle del Documento: {{ documento.folio }}</h3>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <p><strong>Folio:</strong> {{ documento.folio }}</p>
+                    <p><strong>Remitente:</strong> {{ documento.remitente }}</p>
+                    <p><strong>Fecha de Captura:</strong> {{ documento.fecha_captura|date:"d M Y h:i A" }}</p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>Estatus Actual:</strong> <span class="badge bg-info text-dark">{{ documento.estatus_actual.nombre }}</span></p>
+                    <p><strong>Responsable Asignado:</strong> {{ documento.responsable.username }}</p>
+                </div>
+            </div>
+            <hr>
+            <h4>Asunto y Resumen</h4>
+            <p><strong>Asunto:</strong> {{ documento.asunto }}</p>
+            <p><strong>Resumen/Contenido:</strong> {{ documento.resumen }}</p>
+            <hr>
+            
+            {# Enlace al archivo PDF #}
+            {% if documento.archivo_pdf %}
+                <p><strong>Archivo Adjunto:</strong> 
+                    <a href="{{ documento.archivo_pdf.url }}" target="_blank" class="btn btn-sm btn-outline-danger">
+                        Ver Documento PDF
+                    </a>
+                </p>
+            {% else %}
+                <p>No se adjuntó archivo PDF.</p>
+            {% endif %}
+
+            {# Si existe el documento de salida (la respuesta generada) #}
+            {% if documento.documento_respuesta %}
+                <hr>
+                <h4>Respuesta Generada (Salida)</h4>
+                <p>{{ documento.documento_respuesta.contenido }}</p>
+            {% endif %}
+        </div>
+        <div class="card-footer text-end">
+            {# Botón para volver a la página anterior (Dashboard) #}
+            <a href="javascript:history.back()" class="btn btn-secondary">Volver</a>
+        </div>
+    </div>
+</div>
+{% endblock content %}

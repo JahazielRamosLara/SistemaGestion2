@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+
+{% block title %}Gestión de Remitentes{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+            <h4 class="mb-0">Gestión de Remitentes</h4>
+        </div>
+        <div class="card-body">
+            
+            <a href="{% url 'core:captura_documento' %}" class="btn btn-secondary mb-3">
+                <i class="fas fa-arrow-left"></i> Volver a la captura
+            </a>
+
+            {# Tabla que muestra todos los remitentes, activos e inactivos #}
+            <table class="table table-striped table-hover mt-3">
+                <thead>
+                    <tr>
+                        <th scope="col">Trato</th>
+                        <th scope="col">Nombre</th>
+                        <th scope="col">Área</th>
+                        <th scope="col">Estado</th>
+                        <th scope="col">Acción</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+                    {% for remitente in remitentes %}
+                    {# La clase cambia según el estado: table-danger para inactivos #}
+                    <tr id="remitente-row-{{ remitente.pk }}" class="{% if not remitente.habilitado %}table-light{% endif %}">
+                        <td>{{ remitente.trato }}</td>
+                        <td>{{ remitente.nombre }}</td>
+                        <td>{{ remitente.area|default:"N/A" }}</td>
+                        <td id="estado-{{ remitente.pk }}">
+                            {% if remitente.activo %}Activo{% else %}Inactivo{% endif %}
+                        </td>
+                        <td>
+                            {# 🚨 Lógica corregida para el botón 🚨 #}
+                            {% if remitente.activo %}
+                                {# Si está Activo, el botón debe DESACTIVARLO #}
+                                <button class="btn btn-danger btn-sm btn-toggle-activo" data-id="{{ remitente.pk }}">
+                                    Deshabilitar
+                                </button>
+                            {% else %}
+                                {# Si está Inactivo, el botón debe HABILITARLO #}
+                                <button class="btn btn-success btn-sm btn-toggle-activo" data-id="{{ remitente.pk }}">
+                                    Habilitar
+                                </button>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block extra_js %}
+<script>
+// Función para obtener el token CSRF
+function getCsrfToken() {
+    return $('input[name="csrfmiddlewaretoken"]').val();
+}
+
+$(document).ready(function() {
+    $(document).on('click', '.btn-toggle-activo', function(e) {
+        e.preventDefault();
+        
+        const button = $(this);
+        const remitenteId = button.data('id');
+        
+        // 🚨 AJUSTE DE URL: Si tu URL en urls.py es plural ('remitentes'), cámbiala aquí
+        const url = `/remitente/toggle/${remitenteId}/`; 
+        // ☝️ Si tu URL es '/remitentes/', ¡debes cambiarla a const url = \`/remitentes/toggle/${remitenteId}/\`; !
+        
+        const row = button.closest('tr');
+        const estadoCell = row.find('td').eq(3); 
+        
+        const csrfToken = getCsrfToken(); 
+
+        $.ajax({
+            url: url,
+            type: 'POST',
+            data: { 
+                'csrfmiddlewaretoken': csrfToken
+            },
+            success: function(response) {
+                // 🚨 CORRECCIÓN CLAVE AQUÍ: Usamos comparación estricta (=== true/false) 🚨
+                if (response.status === 'success') {
+                    
+                    // Comprueba si el nuevo estado es ACTIVO (true)
+                    if (response.activo === true) { 
+                        // El remitente ahora está Activo
+                        estadoCell.text('Activo');
+                        button.text('Deshabilitar').removeClass('btn-success').addClass('btn-danger');
+                    } else if (response.activo === false) { 
+                        // El remitente ahora está Inactivo
+                        estadoCell.text('Inactivo');
+                        button.text('Habilitar').removeClass('btn-danger').addClass('btn-success');
+                    } else {
+                        // Opcional: Si el valor no es un booleano, recarga la página para mostrar el estado correcto
+                        // Esto asegura que, aunque falle el JS, se muestre el estado del backend.
+                        window.location.reload(); 
+                    }
+                }
+            },
+            error: function(xhr, status, error) {
+                // ... (el manejo de error se mantiene igual)
+            }
+        });
+    });
+});
+</script>
+{% endblock extra_js %}

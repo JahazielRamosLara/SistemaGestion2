@@ -1,0 +1,23 @@
+{% extends 'base.html' %} 
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Generar salida para Folio: {{ documento.folio }}</h2>
+    <p>Respondiendo a: <strong>{{ documento.remitente }}</strong> sobre el asunto: <em>{{ documento.asunto }}</em></p>
+    
+    <form method="post">
+        {% csrf_token %}
+
+        <div class="mb-3">
+            <label for="id_contenido_respuesta" class="form-label">Contenido de la Respuesta</label>
+            {# NOTA: Aquí deberías usar un formulario real de Django, pero usamos un textarea simple #}
+            <textarea id="id_contenido_respuesta" name="contenido_respuesta" rows="10" class="form-control" required></textarea>
+        </div>
+        
+        <button type="submit" class="btn btn-warning btn-lg me-2">
+            Confirmar Salida
+        </button>
+        <a href="{% url 'core:dashboard_secretaria' %}" class="btn btn-secondary btn-lg">Cancelar</a>
+    </form>
+</div>
+{% endblock content %}
