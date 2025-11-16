@@ -1,0 +1,35 @@
+# Archivos compilados de Python
+__pycache__/
+*.py[cod]
+*.so
+*.egg
+*.egg-info/
+
+# Base de datos
+db.sqlite3
+db.sqlite3-journal
+
+# Entorno virtual
+venv/
+env/
+.venv
+ENV/
+
+# Archivos de Django
+*.log
+local_settings.py
+media/
+staticfiles/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+
+# Archivos sensibles
+.env
