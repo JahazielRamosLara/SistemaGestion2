@@ -105,7 +105,7 @@ class CapturaDocumentoView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
         if correo_enviado:
             mensaje += " Correos enviados."
         else:
-            mensaje += "No se pudieron enviar los correos (verifica que los usuarios tengan email)."
+            mensaje += " No se pudieron enviar los correos (verifica que los usuarios tengan email)."
 
         messages.success(self.request, mensaje)
 
