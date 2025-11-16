@@ -36,7 +36,7 @@ class CapturaDocumentoView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
     model = Documento
     #fields = ["folio", "remitente", "asunto", "resumen", "archivo_pdf", "responsable", "responsables_adicionales"]
     form_class = CapturaDocumentoForm
-    template_name = "core/captura_documento.html"
+    template_name = "core\captura_documento.html"
     success_url = reverse_lazy('core:dashboard_secretaria')
 
     def test_func(self):
