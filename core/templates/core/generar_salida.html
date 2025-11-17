@@ -1,23 +1,311 @@
 {% extends 'base.html' %} 
 
+{% block title %}Generar Salida{% endblock %}
+
+{% block extra_css %}
+<style>
+    .output-card {
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        overflow: hidden;
+        margin-top: 30px;
+    }
+
+    .card-header-output {
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        padding: 25px 30px;
+        border: none;
+    }
+
+    .card-header-output h2 {
+        color: white;
+        font-weight: 600;
+        font-size: 24px;
+        margin: 0;
+    }
+
+    .card-body-output {
+        padding: 35px 40px;
+    }
+
+    /* Información del documento */
+    .document-info {
+        background: #fffbeb;
+        border-left: 4px solid #f59e0b;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 30px;
+    }
+
+    .document-info p {
+        margin-bottom: 8px;
+        font-size: 15px;
+        color: #78350f;
+        line-height: 1.6;
+    }
+
+    .document-info p:last-child {
+        margin-bottom: 0;
+    }
+
+    .document-info strong {
+        font-weight: 700;
+        color: #92400e;
+    }
+
+    .document-info em {
+        font-style: italic;
+        color: #b45309;
+    }
+
+    /* Labels del formulario */
+    .form-label {
+        color: #2c3e50;
+        font-weight: 600;
+        font-size: 15px;
+        margin-bottom: 12px;
+        display: block;
+    }
+
+    /* Textarea personalizado */
+    .form-control-custom {
+        border: 2px solid #e8e8e8;
+        border-radius: 12px;
+        padding: 16px 20px;
+        font-size: 15px;
+        color: #666;
+        transition: all 0.3s ease;
+        background: #f8f9fa;
+        width: 100%;
+        min-height: 250px;
+        resize: vertical;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        line-height: 1.6;
+    }
+
+    .form-control-custom:focus {
+        border-color: #f59e0b;
+        box-shadow: 0 0 0 0.2rem rgba(245, 158, 11, 0.15);
+        background: white;
+        outline: none;
+    }
+
+    .form-control-custom::placeholder {
+        color: #999;
+        font-style: italic;
+    }
+
+    /* Botones de acción */
+    .action-buttons {
+        display: flex;
+        gap: 15px;
+        margin-top: 30px;
+        padding-top: 25px;
+        border-top: 2px solid #f0f0f0;
+    }
+
+    .btn-confirm {
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        border: none;
+        border-radius: 50px;
+        padding: 14px 40px;
+        color: white;
+        font-weight: 600;
+        font-size: 16px;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .btn-confirm:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(245, 158, 11, 0.4);
+        background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+        color: white;
+    }
+
+    .btn-confirm:active {
+        transform: translateY(0);
+    }
+
+    .btn-cancel {
+        background: #e8e8e8;
+        border: none;
+        border-radius: 50px;
+        padding: 14px 40px;
+        color: #666;
+        font-weight: 600;
+        font-size: 16px;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .btn-cancel:hover {
+        background: #ddd;
+        color: #333;
+        transform: translateY(-2px);
+    }
+
+    /* Contador de caracteres (opcional) */
+    .char-counter {
+        text-align: right;
+        color: #999;
+        font-size: 13px;
+        margin-top: 8px;
+        font-style: italic;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .card-body-output {
+            padding: 25px 20px;
+        }
+
+        .card-header-output {
+            padding: 20px;
+        }
+
+        .card-header-output h2 {
+            font-size: 20px;
+        }
+
+        .document-info {
+            padding: 15px;
+        }
+
+        .form-control-custom {
+            min-height: 200px;
+            padding: 14px 16px;
+        }
+
+        .action-buttons {
+            flex-direction: column;
+        }
+
+        .btn-confirm,
+        .btn-cancel {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .card-header-output h2 {
+            font-size: 18px;
+        }
+
+        .document-info p {
+            font-size: 14px;
+        }
+
+        .btn-confirm,
+        .btn-cancel {
+            padding: 12px 30px;
+            font-size: 15px;
+        }
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container mt-4">
-    <h2>Generar salida para Folio: {{ documento.folio }}</h2>
-    <p>Respondiendo a: <strong>{{ documento.remitente }}</strong> sobre el asunto: <em>{{ documento.asunto }}</em></p>
-    
-    <form method="post">
-        {% csrf_token %}
-
-        <div class="mb-3">
-            <label for="id_contenido_respuesta" class="form-label">Contenido de la Respuesta</label>
-            {# NOTA: Aquí deberías usar un formulario real de Django, pero usamos un textarea simple #}
-            <textarea id="id_contenido_respuesta" name="contenido_respuesta" rows="10" class="form-control" required></textarea>
+    <div class="output-card">
+        <div class="card-header-output">
+            <h2>
+                <i class="fas fa-paper-plane"></i>
+                Generar Salida para Folio: {{ documento.folio }}
+            </h2>
         </div>
         
-        <button type="submit" class="btn btn-warning btn-lg me-2">
-            Confirmar Salida
-        </button>
-        <a href="{% url 'core:dashboard_secretaria' %}" class="btn btn-secondary btn-lg">Cancelar</a>
-    </form>
+        <div class="card-body-output">
+            
+            <!-- Información del documento -->
+            <div class="document-info">
+                <p>
+                    <i class="fas fa-user"></i>
+                    Respondiendo a: <strong>{{ documento.remitente }}</strong>
+                </p>
+                <p>
+                    <i class="fas fa-file-alt"></i>
+                    Asunto: <em>{{ documento.asunto }}</em>
+                </p>
+            </div>
+            
+            <!-- Formulario de respuesta -->
+            <form method="post">
+                {% csrf_token %}
+
+                <div class="mb-3">
+                    <label for="id_contenido_respuesta" class="form-label">
+                        <i class="fas fa-edit"></i>
+                        Contenido de la Respuesta
+                    </label>
+                    <textarea 
+                        id="id_contenido_respuesta" 
+                        name="contenido_respuesta" 
+                        class="form-control-custom" 
+                        placeholder="Escriba aquí el contenido de la respuesta al documento..."
+                        required></textarea>
+                    <div class="char-counter" id="charCounter">
+                        0 caracteres
+                    </div>
+                </div>
+                
+                <div class="action-buttons">
+                    <button type="submit" class="btn-confirm">
+                        <i class="fas fa-check-circle"></i>
+                        Confirmar Salida
+                    </button>
+                    <a href="{% url 'core:dashboard_secretaria' %}" class="btn-cancel">
+                        <i class="fas fa-times-circle"></i>
+                        Cancelar
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
 {% endblock content %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Contador de caracteres en tiempo real
+    const textarea = $('#id_contenido_respuesta');
+    const counter = $('#charCounter');
+    
+    textarea.on('input', function() {
+        const count = $(this).val().length;
+        counter.text(count + ' caracteres');
+        
+        // Cambiar color si supera cierto límite (opcional)
+        if (count > 5000) {
+            counter.css('color', '#f59e0b');
+        } else {
+            counter.css('color', '#999');
+        }
+    });
+    
+    // Confirmación antes de enviar
+    $('form').on('submit', function(e) {
+        const content = textarea.val().trim();
+        
+        if (content.length < 10) {
+            e.preventDefault();
+            alert('La respuesta debe tener al menos 10 caracteres.');
+            return false;
+        }
+        
+        if (!confirm('¿Está seguro de enviar esta respuesta? Una vez confirmada, el documento cambiará de estado.')) {
+            e.preventDefault();
+            return false;
+        }
+    });
+});
+</script>
+{% endblock %}

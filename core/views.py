@@ -64,7 +64,7 @@ class CapturaDocumentoView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
         try:
             estatus_notificado = Estatus.objects.get(nombre = "Notificado")
         except Estatus.DoesNotExist:
-            messages.error(self.request, 'Error al guardar: El estatus "Capturado" no existe en la base de datos.')
+            messages.error(self.request, 'Error al guardar: El estatus "Notificado" no existe en la base de datos.')
             return self.form_invalid(form)
 
         self.object.estatus_actual = estatus_notificado
@@ -140,7 +140,7 @@ class DashboardResponsableView(LoginRequiredMixin, UserPassesTestMixin, ListView
     
     def get_queryset(self):
         
-        estados_gestion_responsable = ["Capturado", "En Trámite", "Turnado", "Terminado"]
+        estados_gestion_responsable = ["Notificado", "En Trámite", "Turnado", "Terminado"]
 
         return Documento.objects.filter(
             Q(responsable=self.request.user) | Q(responsables_adicionales=self.request.user),

@@ -2,15 +2,234 @@
 
 {% block title %}Captura de Documento{% endblock %}
 
+{% block extra_css %}
+<style>
+    .document-card {
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        overflow: hidden;
+        margin-top: 30px;
+    }
+
+    .card-header-custom {
+        background: linear-gradient(135deg, #6b8fa3 0%, #89a8bb 100%);
+        padding: 25px 30px;
+        border: none;
+    }
+
+    .card-header-custom h4 {
+        color: white;
+        font-weight: 600;
+        font-size: 22px;
+        margin: 0;
+    }
+
+    .card-body-custom {
+        padding: 35px 40px;
+    }
+
+    .form-label {
+        color: #2c3e50;
+        font-weight: 600;
+        font-size: 14px;
+        margin-bottom: 8px;
+        display: block;
+    }
+
+    .form-control, .form-select {
+        border: 2px solid #e8e8e8;
+        border-radius: 12px;
+        padding: 12px 18px;
+        font-size: 15px;
+        color: #666;
+        transition: all 0.3s ease;
+        background: #f8f9fa;
+    }
+
+    .form-control:focus, .form-select:focus {
+        border-color: #6b8fa3;
+        box-shadow: 0 0 0 0.2rem rgba(107, 143, 163, 0.15);
+        background: white;
+        outline: none;
+    }
+
+    textarea.form-control {
+        min-height: 100px;
+        resize: vertical;
+    }
+
+    /* Botones de acción */
+    .btn-primary-custom {
+        background: linear-gradient(135deg, #6b8fa3 0%, #7b9eb2 100%);
+        border: none;
+        border-radius: 50px;
+        padding: 12px 35px;
+        color: white;
+        font-weight: 600;
+        font-size: 15px;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .btn-primary-custom:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(107, 143, 163, 0.4);
+    }
+
+    .btn-primary-custom:active {
+        transform: translateY(0);
+    }
+
+    .btn-secondary-custom {
+        background: #e8e8e8;
+        border: none;
+        border-radius: 50px;
+        padding: 12px 35px;
+        color: #666;
+        font-weight: 600;
+        font-size: 15px;
+        transition: all 0.3s ease;
+    }
+
+    .btn-secondary-custom:hover {
+        background: #ddd;
+        color: #333;
+        transform: translateY(-2px);
+    }
+
+    .btn-icon {
+        background: linear-gradient(135deg, #6b8fa3 0%, #7b9eb2 100%);
+        border: none;
+        border-radius: 12px;
+        padding: 10px 16px;
+        color: white;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .btn-icon:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(107, 143, 163, 0.3);
+    }
+
+    /* Alertas */
+    .alert {
+        border: none;
+        border-radius: 12px;
+        padding: 15px 20px;
+        margin-bottom: 20px;
+        font-size: 14px;
+    }
+
+    .alert-danger {
+        background: #fff5f5;
+        color: #c53030;
+        border-left: 4px solid #fc8181;
+    }
+
+    .alert-success {
+        background: #f0fff4;
+        color: #276749;
+        border-left: 4px solid #68d391;
+    }
+
+    /* Input group personalizado */
+    .input-group-custom {
+        display: flex;
+        gap: 12px;
+        align-items: stretch;
+    }
+
+    .input-group-custom .form-select,
+    .input-group-custom .select2-container {
+        flex: 1;
+    }
+
+    /* Select2 personalización */
+    .select2-container--bootstrap-5 .select2-selection {
+        border: 2px solid #e8e8e8 !important;
+        border-radius: 12px !important;
+        padding: 8px 14px !important;
+        background: #f8f9fa !important;
+        min-height: 48px !important;
+    }
+
+    .select2-container--bootstrap-5.select2-container--focus .select2-selection {
+        border-color: #6b8fa3 !important;
+        box-shadow: 0 0 0 0.2rem rgba(107, 143, 163, 0.15) !important;
+        background: white !important;
+    }
+
+    /* Mensajes de error */
+    .text-danger {
+        color: #fc8181;
+        font-size: 13px;
+        margin-top: 6px;
+        display: block;
+    }
+
+    /* Botones de acción final */
+    .action-buttons {
+        display: flex;
+        justify-content: flex-end;
+        gap: 15px;
+        margin-top: 35px;
+        padding-top: 25px;
+        border-top: 2px solid #f0f0f0;
+    }
+
+    /* Campo de archivo */
+    .form-control[type="file"] {
+        padding: 10px 18px;
+    }
+
+    /* Contenedor de otros responsables */
+    #otros-container {
+        margin-top: 15px;
+        padding: 20px;
+        background: #f8f9fa;
+        border-radius: 12px;
+        border: 2px dashed #e8e8e8;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .card-body-custom {
+            padding: 25px 20px;
+        }
+
+        .input-group-custom {
+            flex-direction: column;
+        }
+
+        .action-buttons {
+            flex-direction: column;
+        }
+
+        .btn-primary-custom,
+        .btn-secondary-custom {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+    
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container mt-4">
     <div class="row">
-        <div class="col-md-12 offset-md-0">
-            <div class="card shadow-sm">
-                <div class="card-header bg-primary text-white">
-                    <h4 class="mb-0"> Nuevo Documento</h4>
+        <div class="col-md-12">
+            <div class="document-card">
+                <div class="card-header-custom">
+                    <h4>Nuevo Documento</h4>
                 </div>
-                <div class="card-body px-4 py-2">
+                <div class="card-body-custom">
                     
                     {% if messages %}
                         {% for message in messages %}
@@ -22,89 +241,82 @@
                         {% csrf_token %}
 
                         <div class="row">
-                            <div class="col-md-1 py-2">
-                                <div class="form-group">
-                                    <label for="{{ form.folio.id_for_label }}">Folio:</label>
-                                    {{ form.folio }}
-                                </div>
+                            <div class="col-md-2 mb-3">
+                                <label for="{{ form.folio.id_for_label }}" class="form-label">Folio:</label>
+                                {{ form.folio }}
+                                {% if form.folio.errors %}
+                                    <small class="text-danger">{{ form.folio.errors }}</small>
+                                {% endif %}
                             </div>
-                            <div class="form-group py-2">
-                                <div class="form-group col-md-8">
-                                    <label for="{{ form.remitente.id_for_label }}">Remitente:</label>
-                                    <div class="input-group">
-            
-                                        {# El campo de selección del Remitente #}
-                                        {{ form.remitente }}
-
-
-                                        <div class="input-group-append mx-3">
-                                        {# Botón que abre el modal para crear nuevo Remitente - Justo a la derecha del de Gestión #}
-                                            <button type="button" class="btn btn-primary me-0" data-bs-toggle="modal" data-bs-target="#modal-remitente" title="Crear Nuevo Remitente">
-                                                <i class="fas fa-plus"></i>
-                                            </button>
-                                        </div>
-                                        {# Botón de Gestión de Remitentes (Ícono) - Justo a la derecha del SELECT #}
-                                        <div class="input-group-append">
-                                            <a href="{% url 'core:gestion_remitentes' %}" class="btn btn-primary" title="Gestionar Remitentes">
-                                                <i class="fas fa-list"></i> 
-                                            </a>
-                                        </div>
-                                    </div>
-                                    {% if form.remitente.errors %}
-                                        <small class="text-danger">{{ form.remitente.errors }}</small>
-                                    {% endif %}
+                            
+                            <div class="col-md-10 mb-3">
+                                <label for="{{ form.remitente.id_for_label }}" class="form-label">Remitente:</label>
+                                <div class="input-group-custom">
+                                    {{ form.remitente }}
+                                    
+                                    <button type="button" class="btn-icon" data-bs-toggle="modal" data-bs-target="#modal-remitente" title="Crear Nuevo Remitente">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                    
+                                    <a href="{% url 'core:gestion_remitentes' %}" class="btn-icon" title="Gestionar Remitentes">
+                                        <i class="fas fa-list"></i> 
+                                    </a>
                                 </div>
+                                {% if form.remitente.errors %}
+                                    <small class="text-danger">{{ form.remitente.errors }}</small>
+                                {% endif %}
                             </div>
                         </div>
 
-                        <div class="form-group py-2">
-                            <label for="{{ form.asunto.id_for_label }}">Asunto:</label>
+                        <div class="mb-3">
+                            <label for="{{ form.asunto.id_for_label }}" class="form-label">Asunto:</label>
                             {{ form.asunto }}
-                        </div>
-                        <div class="form-group py-2">
-                            <label for="{{ form.resumen.id_for_label }}">Resumen:</label>
-                            {{ form.resumen }}
-                        </div>
-
-                        <div class="form-group py-4">
-                            <label for="{{ form.archivo_pdf.id_for_label }}"></label>
-                            {{ form.archivo_pdf }}
-                            {% if form.archivo_pdf.errors %}
-                                <small class="text-danger d-block">{{ form.archivo_pdf.errors }}</small>
+                            {% if form.asunto.errors %}
+                                <small class="text-danger">{{ form.asunto.errors }}</small>
                             {% endif %}
                         </div>
 
-                        <div class="col-md-8">
-                            <div class="form-group">
-                                <label for="{{ form.responsable.id_for_label }}">Responsable:</label>
-                                <div class="input-group">
-                                    {{ form.responsable }}
-                                </div>
+                        <div class="mb-3">
+                            <label for="{{ form.resumen.id_for_label }}" class="form-label">Resumen:</label>
+                            {{ form.resumen }}
+                            {% if form.resumen.errors %}
+                                <small class="text-danger">{{ form.resumen.errors }}</small>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="{{ form.archivo_pdf.id_for_label }}" class="form-label">Archivo PDF:</label>
+                            {{ form.archivo_pdf }}
+                            {% if form.archivo_pdf.errors %}
+                                <small class="text-danger">{{ form.archivo_pdf.errors }}</small>
+                            {% endif %}
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-8 mb-3">
+                                <label for="{{ form.responsable.id_for_label }}" class="form-label">Responsable:</label>
+                                {{ form.responsable }}
                                 {% if form.responsable.errors %}
                                     <small class="text-danger">{{ form.responsable.errors }}</small>
                                 {% endif %}
                             </div>
                         </div>
                                     
-                        {# 2. Contenedor OCULTO para el campo "Otros" #}
+                        {# Contenedor OCULTO para el campo "Otros" #}
                         <div id="otros-container" style="display: none;">
-                            <div class="row py-2">
-                                <div class="form-group col-md-8">
-                                    <label for="{{ form.responsables_adicionales.id_for_label }}">Otros:</label>
-                                    <div class="input-group">
-                                        {# El campo de selección de Responsables Adicionales #}
-                                        {{ form.responsables_adicionales }}
-                                    </div>
-                                    {% if form.responsables_adicionales.errors %}
-                                        <small class="text-danger">{{ form.responsables_adicionales.errors }}</small>
-                                    {% endif %}
-                                </div>
-                            </div>
+                            <label for="{{ form.responsables_adicionales.id_for_label }}" class="form-label">Otros Responsables:</label>
+                            {{ form.responsables_adicionales }}
+                            {% if form.responsables_adicionales.errors %}
+                                <small class="text-danger">{{ form.responsables_adicionales.errors }}</small>
+                            {% endif %}
                         </div>
 
-                        <div class="d-flex justify-content-end mt-4 py-3">
-                            <button type="submit" class="btn btn-primary btn-lg me-3">Guardar Documento</button>
-                            <a href="{% url 'core:dashboard_secretaria' %}" class="btn btn-secondary btn-lg">
+                        <div class="action-buttons">
+                            <button type="submit" class="btn-primary-custom">
+                                <i class="fas fa-save"></i>
+                                Guardar Documento
+                            </button>
+                            <a href="{% url 'core:dashboard_secretaria' %}" class="btn-secondary-custom">
                                 Cancelar
                             </a>
                         </div>
@@ -115,8 +327,9 @@
     </div>
 </div>
 
-
 {% include 'core/remitente_modal.html' %}
+
+{% endblock %}
 
 {% block extra_js %}
 <script>
@@ -184,35 +397,36 @@ $(document).ready(function() {
         placeholder: "---------",
         allowClear: true
     });
+    
     $('#id_responsables_adicionales').select2({
-    theme: "bootstrap-5",
-    placeholder: "Selecciona responsables adicionales",
-    allowClear: true,
-    multiple: true,  // Permite selección múltiple
-    width: '100%'    // Asegura que ocupe todo el ancho disponible
+        theme: "bootstrap-5",
+        placeholder: "Selecciona responsables adicionales",
+        allowClear: true,
+        multiple: true,
+        width: '100%'
     });
+    
     // ========== MOSTRAR/OCULTAR CAMPO "OTROS" ==========
     const $responsableSelect = $('#id_responsable');
     const $otrosContainer = $('#otros-container');
     
     function toggleOtrosField() {
-    const valorSeleccionado = $responsableSelect.val();
-    console.log('Valor seleccionado:', valorSeleccionado);
-    console.log('Tipo de dato:', typeof valorSeleccionado);
-    
-    // Verificar que el valor no sea null, undefined, vacío o el placeholder
-    if (valorSeleccionado !== null && 
-        valorSeleccionado !== undefined && 
-        valorSeleccionado !== '' && 
-        String(valorSeleccionado).trim() !== '') {
+        const valorSeleccionado = $responsableSelect.val();
+        console.log('Valor seleccionado:', valorSeleccionado);
+        console.log('Tipo de dato:', typeof valorSeleccionado);
         
-        $otrosContainer.slideDown(300);
-        console.log('✅ Mostrando campo Otros');
-    } else {
-        $otrosContainer.slideUp(300);
-        console.log('❌ Ocultando campo Otros - valor inválido');
+        if (valorSeleccionado !== null && 
+            valorSeleccionado !== undefined && 
+            valorSeleccionado !== '' && 
+            String(valorSeleccionado).trim() !== '') {
+            
+            $otrosContainer.slideDown(300);
+            console.log('✅ Mostrando campo Otros');
+        } else {
+            $otrosContainer.slideUp(300);
+            console.log('❌ Ocultando campo Otros - valor inválido');
+        }
     }
-}
     
     // Ejecutar al cargar
     toggleOtrosField();
@@ -224,5 +438,4 @@ $(document).ready(function() {
     });
 });
 </script>
-{% endblock %}
 {% endblock %}

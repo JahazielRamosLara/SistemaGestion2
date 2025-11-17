@@ -1,10 +1,274 @@
 {% extends 'base.html' %} 
 
+{% block title %}Panel de Gestión{% endblock %}
+
+{% block extra_css %}
+<style>
+    .dashboard-header {
+        background: white;
+        border-radius: 16px;
+        padding: 30px;
+        margin-bottom: 30px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    }
+
+    .dashboard-header h2 {
+        color: #2c3e50;
+        font-weight: 700;
+        font-size: 28px;
+        margin-bottom: 8px;
+    }
+
+    .dashboard-header p {
+        color: #666;
+        font-size: 15px;
+        margin: 0;
+    }
+
+    /* Alertas personalizadas */
+    .messages {
+        margin-bottom: 25px;
+    }
+
+    .alert {
+        border: none;
+        border-radius: 12px;
+        padding: 15px 20px;
+        margin-bottom: 15px;
+        font-size: 14px;
+        border-left: 4px solid;
+    }
+
+    .alert-success {
+        background: #f0fff4;
+        color: #276749;
+        border-left-color: #68d391;
+    }
+
+    .alert-danger {
+        background: #fff5f5;
+        color: #c53030;
+        border-left-color: #fc8181;
+    }
+
+    .alert-warning {
+        background: #fffbeb;
+        color: #744210;
+        border-left-color: #f6ad55;
+    }
+
+    .alert-info {
+        background: #ebf8ff;
+        color: #2c5282;
+        border-left-color: #63b3ed;
+    }
+
+    /* Tabla personalizada */
+    .table-card {
+        background: white;
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    }
+
+    .table {
+        margin: 0;
+    }
+
+    .table thead {
+        background: linear-gradient(135deg, #6b8fa3 0%, #89a8bb 100%);
+    }
+
+    .table thead th {
+        color: #2c3e50;
+        font-weight: 600;
+        font-size: 14px;
+        padding: 18px 20px;
+        border: none;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .table tbody td {
+        padding: 18px 20px;
+        color: #4a5568;
+        font-size: 14px;
+        vertical-align: middle;
+        border-bottom: 1px solid #f0f0f0;
+    }
+
+    .table tbody tr {
+        transition: all 0.2s ease;
+    }
+
+    .table tbody tr:hover {
+        background: #f8f9fa;
+    }
+
+    .table tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    /* Enlaces en tabla */
+    .table a {
+        color: #6b8fa3;
+        font-weight: 600;
+        text-decoration: none;
+        transition: color 0.2s ease;
+    }
+
+    .table a:hover {
+        color: #5a7a8a;
+        text-decoration: underline;
+    }
+
+    /* Badges personalizados */
+    .badge {
+        padding: 6px 14px;
+        border-radius: 50px;
+        font-weight: 600;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .badge.bg-warning {
+        background: #fbbf24 !important;
+        color: #78350f !important;
+    }
+
+    .badge.bg-primary {
+        background: linear-gradient(135deg, #6b8fa3 0%, #7b9eb2 100%) !important;
+        color: white !important;
+        border: none;
+    }
+
+    .badge.bg-info {
+        background: #7dd3fc !important;
+        color: #0c4a6e !important;
+    }
+
+    .badge.bg-success {
+        background: #86efac !important;
+        color: #14532d !important;
+    }
+
+    /* Botones de acción */
+    .btn-success {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        border: none;
+        border-radius: 50px;
+        padding: 8px 20px;
+        color: white;
+        font-weight: 600;
+        font-size: 13px;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .btn-success:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 15px rgba(16, 185, 129, 0.3);
+        background: linear-gradient(135deg, #059669 0%, #047857 100%);
+    }
+
+    .btn-danger {
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        border: none;
+        border-radius: 50px;
+        padding: 8px 20px;
+        color: white;
+        font-weight: 600;
+        font-size: 13px;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .btn-danger:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 15px rgba(239, 68, 68, 0.3);
+        background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+    }
+
+    .btn-sm {
+        padding: 7px 18px;
+        font-size: 12px;
+    }
+
+    /* Texto de estado */
+    .text-success.small {
+        color: #10b981 !important;
+        font-weight: 600;
+        font-size: 13px;
+        font-style: italic;
+    }
+
+    /* Mensaje vacío */
+    .text-center {
+        color: #718096;
+        font-style: italic;
+        padding: 40px 20px !important;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .dashboard-header {
+            padding: 20px;
+        }
+
+        .dashboard-header h2 {
+            font-size: 24px;
+        }
+
+        .table thead th,
+        .table tbody td {
+            padding: 12px 15px;
+            font-size: 13px;
+        }
+
+        .btn-success,
+        .btn-danger {
+            padding: 6px 15px;
+            font-size: 12px;
+        }
+
+        /* Hacer scroll horizontal en móviles */
+        .table-responsive {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .table {
+            min-width: 700px;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .dashboard-header h2 {
+            font-size: 20px;
+        }
+
+        .dashboard-header p {
+            font-size: 14px;
+        }
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container mt-4">
-    <h2>Panel de Gestión - {{ user.username }} </h2>
-    <p>Oficios asignados para seguimiento y trámite.</p>
     
+    <!-- Header del Dashboard -->
+    <div class="dashboard-header">
+        <h2>Panel de Gestión - {{ user.username }}</h2>
+        <p>Oficios asignados para seguimiento y trámite.</p>
+    </div>
+    
+    <!-- Mensajes del sistema -->
     {% if messages %}
         <ul class="messages list-unstyled">
             {% for message in messages %}
@@ -13,27 +277,32 @@
         </ul>
     {% endif %}
 
-    <div class="table-responsive">
-        <table class="table table-striped table-hover">
-            <thead class="table-dark">
+    <!-- Tabla de documentos -->
+    <div class="table-responsive table-card">
+        <table class="table table-hover">
+            <thead>
                 <tr>
                     <th>Folio</th>
                     <th>Asunto</th>
                     <th>Estatus Actual</th>
-                    <th>Rol</th> <!-- NUEVO -->
+                    <th>Rol</th>
                     <th>Acciones</th>
                 </tr>
             </thead>
             <tbody>
                 {% for documento in documentos %}
                 <tr>
-                    <td>{{ documento.folio }}</td>
-                    <td><a href="{% url 'core:detalle_documento' pk=documento.pk %}">{{ documento.asunto|truncatechars:70 }}</a></td>
+                    <td><strong>{{ documento.folio }}</strong></td>
+                    <td>
+                        <a href="{% url 'core:detalle_documento' pk=documento.pk %}">
+                            {{ documento.asunto|truncatechars:70 }}
+                        </a>
+                    </td>
                     <td>
                         <span class="badge bg-warning text-dark">{{ documento.estatus_actual.nombre }}</span>
                     </td>
                     
-                    <!-- NUEVO: Mostrar si es responsable principal o adicional -->
+                    <!-- Mostrar si es responsable principal o adicional -->
                     <td>
                         {% if documento.responsable == user %}
                             <span class="badge bg-primary">Principal</span>
@@ -48,7 +317,8 @@
                         {# Si el estado es 'Notificado' (recién llegado), solo puede iniciar trámite #}
                         {% if documento.estatus_actual.nombre == 'Notificado' %}
                             <a href="{% url 'core:iniciar_tramite' pk=documento.pk %}" 
-                               class="btn btn-success btn-sm me-1">
+                               class="btn btn-success btn-sm">
+                                <i class="fas fa-play"></i>
                                 Iniciar Trámite 
                             </a>
                         
@@ -58,17 +328,25 @@
                             <a href="{% url 'core:devolver_para_contestar' pk=documento.pk %}" 
                                class="btn btn-danger btn-sm"
                                onclick="return confirm('¿Confirma que el requerimiento está listo y debe ser contestado?');">
+                                <i class="fas fa-reply"></i>
                                 Contestar por Memo 
                             </a>
                             
                         {% elif documento.estatus_actual.nombre == 'Terminado' %}
-                             <p class="text-success small">Esperando acción de otra área.</p>
+                            <p class="text-success small mb-0">
+                                <i class="fas fa-check-circle"></i>
+                                Esperando acción de otra área
+                            </p>
                         {% endif %}
                     </td>
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="5" class="text-center">No tiene documentos asignados para seguimiento.</td>
+                    <td colspan="5" class="text-center">
+                        <i class="fas fa-inbox fa-2x mb-2" style="color: #cbd5e0;"></i>
+                        <br>
+                        No tiene documentos asignados para seguimiento.
+                    </td>
                 </tr>
                 {% endfor %}
             </tbody>

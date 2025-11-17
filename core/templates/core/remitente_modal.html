@@ -1,4 +1,181 @@
-{# Este es el contenido que debes pegar en tu archivo remitente_modal.html #}
+{# Modal personalizado para crear nuevo remitente #}
+
+<style>
+    /* Estilos para el modal de remitente */
+    .modal-content {
+        border-radius: 16px;
+        border: none;
+        overflow: hidden;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    }
+
+    .modal-header-custom {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        padding: 25px 30px;
+        border: none;
+    }
+
+    .modal-header-custom .modal-title {
+        color: white;
+        font-weight: 600;
+        font-size: 20px;
+        margin: 0;
+    }
+
+    .modal-header-custom .btn-close {
+        filter: brightness(0) invert(1);
+        opacity: 0.8;
+    }
+
+    .modal-header-custom .btn-close:hover {
+        opacity: 1;
+    }
+
+    .modal-body {
+        padding: 30px;
+    }
+
+    .modal-body .form-group {
+        margin-bottom: 20px;
+    }
+
+    #modal-remitente label,
+    #modal-remitente .form-label,
+    .modal-body label {
+        color: #000000 !important;
+        font-weight: 600 !important;
+        font-size: 14px !important;
+        margin-bottom: 8px;
+        display: block;
+    }
+
+    .modal-body .form-control,
+    .modal-body .form-select {
+        border: 2px solid #e8e8e8;
+        border-radius: 12px;
+        padding: 12px 18px;
+        font-size: 15px;
+        color: #666;
+        transition: all 0.3s ease;
+        background: #f8f9fa;
+    }
+
+    .modal-body .form-control:focus,
+    .modal-body .form-select:focus {
+        border-color: #10b981;
+        box-shadow: 0 0 0 0.2rem rgba(16, 185, 129, 0.15);
+        background: white;
+        outline: none;
+    }
+
+    /* Alerta de error en modal */
+    .modal-body .alert-danger {
+        border: none;
+        border-radius: 12px;
+        padding: 15px 20px;
+        margin-bottom: 20px;
+        font-size: 14px;
+        background: #fff5f5;
+        color: #c53030;
+        border-left: 4px solid #fc8181;
+    }
+
+    .modal-body .text-danger {
+        color: #fc8181;
+        font-size: 13px;
+        margin-top: 6px;
+        display: block;
+    }
+
+    /* Footer del modal */
+    .modal-footer {
+        padding: 20px 30px;
+        border-top: 2px solid #f0f0f0;
+        background: #fafafa;
+        display: flex;
+        gap: 12px;
+        justify-content: flex-end;
+    }
+
+    .modal-footer .btn-secondary-modal {
+        background: #e8e8e8;
+        border: none;
+        border-radius: 50px;
+        padding: 12px 28px;
+        color: #666;
+        font-weight: 600;
+        font-size: 14px;
+        transition: all 0.3s ease;
+    }
+
+    .modal-footer .btn-secondary-modal:hover {
+        background: #ddd;
+        color: #333;
+    }
+
+    .modal-footer .btn-success-modal {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        border: none;
+        border-radius: 50px;
+        padding: 12px 28px;
+        color: white;
+        font-weight: 600;
+        font-size: 14px;
+        transition: all 0.3s ease;
+    }
+
+    .modal-footer .btn-success-modal:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(16, 185, 129, 0.3);
+        background: linear-gradient(135deg, #059669 0%, #047857 100%);
+    }
+
+    .modal-footer .btn-success-modal:active {
+        transform: translateY(0);
+    }
+
+    /* Estado de carga en botón */
+    .modal-footer .btn-success-modal:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+    }
+
+    /* Backdrop del modal */
+    .modal-backdrop.show {
+        opacity: 0.5;
+    }
+
+    /* Animación del modal */
+    .modal.fade .modal-dialog {
+        transition: transform 0.3s ease-out;
+    }
+
+    /* Responsive */
+    @media (max-width: 576px) {
+        .modal-body {
+            padding: 20px;
+        }
+
+        .modal-header-custom {
+            padding: 20px;
+        }
+
+        .modal-header-custom .modal-title {
+            font-size: 18px;
+        }
+
+        .modal-footer {
+            padding: 15px 20px;
+            flex-direction: column;
+        }
+
+        .modal-footer .btn-secondary-modal,
+        .modal-footer .btn-success-modal {
+            width: 100%;
+        }
+    }
+</style>
 
 <div class="modal fade" id="modal-remitente" tabindex="-1" aria-labelledby="remitenteModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
@@ -7,8 +184,11 @@
             <form id="remitente-form" method="post" action="{% url 'core:crear_remitente' %}">
                 {% csrf_token %}
 
-                <div class="modal-header bg-success text-white">
-                    <h5 class="modal-title" id="remitenteModalLabel">Crear Nuevo Remitente</h5>
+                <div class="modal-header modal-header-custom">
+                    <h5 class="modal-title" id="remitenteModalLabel">
+                        <i class="fas fa-user-plus"></i>
+                        Crear Nuevo Remitente
+                    </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
 
@@ -18,47 +198,53 @@
                     {% if remitente_form %}
                         
                         {# 1. Campo TRATO #}
-                        <div class="form-group mb-3">
+                        <div class="form-group">
                             <label for="id_trato">Trato:</label>
-                            
                             <select name="trato" id="id_trato" class="form-select" required>
                                 {% for value, label in remitente_form.trato.field.choices %}
                                     <option value="{{ value }}">{{ label }}</option>
                                 {% endfor %}
                             </select>
-                            
                             {% if remitente_form.trato.errors %}
-                                <div class="text-danger">{{ remitente_form.trato.errors }}</div>
+                                <small class="text-danger">{{ remitente_form.trato.errors }}</small>
                             {% endif %}
                         </div>
                         
                         {# 2. Campo NOMBRE #}
-                        <div class="form-group mb-3">
+                        <div class="form-group">
                             <label for="{{ remitente_form.nombre.id_for_label }}">Nombre:</label>
                             {{ remitente_form.nombre }}
                             {% if remitente_form.nombre.errors %}
-                                <div class="text-danger">{{ remitente_form.nombre.errors }}</div>
+                                <small class="text-danger">{{ remitente_form.nombre.errors }}</small>
                             {% endif %}
                         </div>
 
                         {# 3. Campo ÁREA #}
-                        <div class="form-group mb-3">
+                        <div class="form-group">
                             <label for="{{ remitente_form.area.id_for_label }}">Área (Opcional):</label>
                             {{ remitente_form.area }}
                             {% if remitente_form.area.errors %}
-                                <div class="text-danger">{{ remitente_form.area.errors }}</div>
+                                <small class="text-danger">{{ remitente_form.area.errors }}</small>
                             {% endif %}
                         </div>
 
                     {% else %}
-                        {# Fallback si el formulario no se pasa al contexto, aunque no debería ocurrir si usas AJAX #}
-                        <p class="text-danger">Error: El formulario de remitente no está disponible.</p>
+                        {# Fallback si el formulario no se pasa al contexto #}
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            Error: El formulario de remitente no está disponible.
+                        </div>
                     {% endif %}
                 </div>
 
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-success" id="btn-guardar-remitente">Guardar Remitente</button>
+                    <button type="button" class="btn-secondary-modal" data-bs-dismiss="modal">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="btn-success-modal" id="btn-guardar-remitente">
+                        <i class="fas fa-save"></i>
+                        Guardar Remitente
+                    </button>
                 </div>
             </form>
         </div>
