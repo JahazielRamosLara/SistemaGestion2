@@ -18,7 +18,9 @@ from django.template.loader import render_to_string
 from django.contrib.auth.models import Group
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
-from .utils import enviar_notificacion_documento
+from .utils import enviar_notificacion_documento, generar_pdf_salida
+from django.core.files.base import ContentFile
+from datetime import date
 
 # Create your views here.
 
@@ -452,29 +454,42 @@ def generar_salida(request, pk):
         return redirect("core:detalle_documento", pk=pk)
     
     if request.method == "POST":
-        form = GenerarSalidaForm(request.POST, request.FILES, instance=documento)
+        form = GenerarSalidaForm(request.POST)
 
         if form.is_valid():
-            form.save()
-
+            # Obtener datos del formulario
+            folio_salida = form.cleaned_data['folio_salida']
+            contenido_respuesta = form.cleaned_data['contenido_respuesta']
+            
+            # Asignar folio y fecha automática
+            documento.folio_salida = folio_salida
+            documento.fecha_salida = date.today()
+            
+            # Generar el PDF
             try:
-                estatus_archivado = Estatus.objects.get(nombre="En Firma")
-                documento.estatus_actual = estatus_archivado
+                pdf_content = generar_pdf_salida(documento, contenido_respuesta)
+                
+                # Guardar el PDF en el campo documento_salida
+                nombre_archivo = f"salida_{documento.folio_salida.replace('/', '_')}.pdf"
+                documento.documento_salida.save(nombre_archivo, ContentFile(pdf_content), save=False)
+                
+                # Cambiar estado a "En Firma"
+                estatus_firma = Estatus.objects.get(nombre="En Firma")
+                documento.estatus_actual = estatus_firma
                 documento.save()
-                messages.success(request, f"Folio {documento.folio} marcado como 'En Firma'.")
+                
+                messages.success(request, f"Documento de salida generado exitosamente. Folio: {documento.folio_salida}")
                 return redirect("core:dashboard_secretaria")
-            except Estatus.DoesNotExist:
-                messages.error(request, "Error interno: El estatus 'En Firma' no existe.")
-                return redirect("detalle_documento", pk=pk)
+                
+            except Exception as e:
+                messages.error(request, f"Error al generar el PDF: {str(e)}")
+                return redirect("core:generar_salida", pk=pk)
     else:
-        form = GenerarSalidaForm(instance=documento)
-
-    resumenes_adicionales = documento.resumenes_adicionales.select_related('responsable').all()
+        form = GenerarSalidaForm()
 
     context = {
         "form": form,
         "documento": documento,
-        "resumenes_adicionales": resumenes_adicionales 
     }
     
     return render(request, "core/generar_salida.html", context)

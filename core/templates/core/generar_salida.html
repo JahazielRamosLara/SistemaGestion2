@@ -61,7 +61,7 @@
 
     /* Cajas de resúmenes */
     .responsable-summary {
-        background: #eee;
+        background: #f0f9ff;
         border-left: 4px solid #3b82f6;
         border-radius: 12px;
         padding: 20px;
@@ -69,7 +69,7 @@
     }
 
     .responsable-summary.adicional {
-        background: #eee;
+        background: #f0fdf4;
         border-left-color: #10b981;
     }
 
@@ -116,37 +116,34 @@
     .form-label {
         color: #2c3e50;
         font-weight: 600;
-        font-size: 15px;
-        margin-bottom: 12px;
+        font-size: 14px;
+        margin-bottom: 8px;
         display: block;
     }
 
-    /* Textarea personalizado */
-    .form-control-custom {
+    /* Campos de formulario */
+    .form-control, .form-select {
         border: 2px solid #e8e8e8;
         border-radius: 12px;
-        padding: 16px 20px;
+        padding: 12px 18px;
         font-size: 15px;
         color: #666;
         transition: all 0.3s ease;
         background: #f8f9fa;
-        width: 100%;
-        min-height: 250px;
-        resize: vertical;
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        line-height: 1.6;
     }
 
-    .form-control-custom:focus {
+    .form-control:focus, .form-select:focus {
         border-color: #f59e0b;
         box-shadow: 0 0 0 0.2rem rgba(245, 158, 11, 0.15);
         background: white;
         outline: none;
     }
 
-    .form-control-custom::placeholder {
-        color: #999;
-        font-style: italic;
+    textarea.form-control {
+        min-height: 200px;
+        resize: vertical;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        line-height: 1.6;
     }
 
     /* Botones de acción */
@@ -158,7 +155,7 @@
         border-top: 2px solid #f0f0f0;
     }
 
-    .btn-confirm {
+    .btn-primary-custom {
         background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
         border: none;
         border-radius: 50px;
@@ -172,18 +169,18 @@
         gap: 10px;
     }
 
-    .btn-confirm:hover {
+    .btn-primary-custom:hover {
         transform: translateY(-2px);
         box-shadow: 0 8px 25px rgba(245, 158, 11, 0.4);
         background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
         color: white;
     }
 
-    .btn-confirm:active {
+    .btn-primary-custom:active {
         transform: translateY(0);
     }
 
-    .btn-cancel {
+    .btn-secondary-custom {
         background: #e8e8e8;
         border: none;
         border-radius: 50px;
@@ -198,7 +195,7 @@
         gap: 10px;
     }
 
-    .btn-cancel:hover {
+    .btn-secondary-custom:hover {
         background: #ddd;
         color: #333;
         transform: translateY(-2px);
@@ -211,6 +208,32 @@
         font-size: 13px;
         margin-top: 8px;
         font-style: italic;
+    }
+
+    /* Mensajes de error */
+    .text-danger {
+        color: #fc8181;
+        font-size: 13px;
+        margin-top: 6px;
+        display: block;
+    }
+
+    /* Sección del formulario */
+    .form-section {
+        background: #fafafa;
+        border-radius: 12px;
+        padding: 25px;
+        margin-top: 30px;
+    }
+
+    .form-section-title {
+        color: #2c3e50;
+        font-weight: 700;
+        font-size: 18px;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 3px solid #f59e0b;
+        display: inline-block;
     }
 
     /* Responsive */
@@ -239,17 +262,20 @@
             padding-left: 0;
         }
 
-        .form-control-custom {
-            min-height: 200px;
-            padding: 14px 16px;
+        .form-section {
+            padding: 20px;
+        }
+
+        textarea.form-control {
+            min-height: 150px;
         }
 
         .action-buttons {
             flex-direction: column;
         }
 
-        .btn-confirm,
-        .btn-cancel {
+        .btn-primary-custom,
+        .btn-secondary-custom {
             width: 100%;
             justify-content: center;
         }
@@ -264,8 +290,8 @@
             font-size: 14px;
         }
 
-        .btn-confirm,
-        .btn-cancel {
+        .btn-primary-custom,
+        .btn-secondary-custom {
             padding: 12px 30px;
             font-size: 15px;
         }
@@ -278,22 +304,26 @@
     <div class="output-card">
         <div class="card-header-output">
             <h2>
-                <i class="fas fa-paper-plane"></i>
-                Generar Salida para Folio: {{ documento.folio }}
+                <i class="fas fa-file-export"></i>
+                Generar Documento de Salida - Folio: {{ documento.folio }}
             </h2>
         </div>
         
         <div class="card-body-output">
             
-            <!-- Información del documento -->
+            <!-- Información del documento de entrada -->
             <div class="document-info">
                 <p>
                     <i class="fas fa-user"></i>
-                    Respondiendo a: <strong>{{ documento.remitente }}</strong>
+                    <strong>Remitente:</strong> {{ documento.remitente }}
                 </p>
                 <p>
                     <i class="fas fa-file-alt"></i>
-                    Asunto: <em>{{ documento.asunto }}</em>
+                    <strong>Asunto:</strong> <em>{{ documento.asunto }}</em>
+                </p>
+                <p>
+                    <i class="fas fa-hashtag"></i>
+                    <strong>Folio de Entrada:</strong> {{ documento.folio }}
                 </p>
             </div>
 
@@ -322,37 +352,56 @@
                 {% endfor %}
             {% endif %}
             
-            <!-- Formulario de respuesta -->
-            <form method="post">
-                {% csrf_token %}
-
-                <div class="mb-3">
-                    <label for="id_contenido_respuesta" class="form-label">
-                        <i class="fas fa-edit"></i>
-                        Contenido de la Respuesta
-                    </label>
-                    <textarea 
-                        id="id_contenido_respuesta" 
-                        name="contenido_respuesta" 
-                        class="form-control-custom" 
-                        placeholder="Escriba aquí el contenido de la respuesta al documento..."
-                        required></textarea>
-                    <div class="char-counter" id="charCounter">
-                        0 caracteres
-                    </div>
-                </div>
+            <!-- Formulario de salida -->
+            <div class="form-section">
+                <h4 class="form-section-title">
+                    <i class="fas fa-file-signature"></i>
+                    Datos del Documento de Salida
+                </h4>
                 
-                <div class="action-buttons">
-                    <button type="submit" class="btn-confirm">
-                        <i class="fas fa-check-circle"></i>
-                        Confirmar Salida
-                    </button>
-                    <a href="{% url 'core:dashboard_secretaria' %}" class="btn-cancel">
-                        <i class="fas fa-times-circle"></i>
-                        Cancelar
-                    </a>
-                </div>
-            </form>
+                <form method="post">
+                    {% csrf_token %}
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.folio_salida.id_for_label }}" class="form-label">
+                                Folio de Salida:
+                            </label>
+                            {{ form.folio_salida }}
+                            {% if form.folio_salida.errors %}
+                                <small class="text-danger">{{ form.folio_salida.errors }}</small>
+                            {% endif %}
+                            <small class="text-muted d-block mt-1">
+                                La fecha se generará automáticamente al confirmar
+                            </small>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form.contenido_respuesta.id_for_label }}" class="form-label">
+                            Contenido de la Respuesta:
+                        </label>
+                        {{ form.contenido_respuesta }}
+                        {% if form.contenido_respuesta.errors %}
+                            <small class="text-danger">{{ form.contenido_respuesta.errors }}</small>
+                        {% endif %}
+                        <div class="char-counter" id="charCounter">
+                            0 caracteres
+                        </div>
+                    </div>
+                    
+                    <div class="action-buttons">
+                        <button type="submit" class="btn-primary-custom">
+                            <i class="fas fa-file-pdf"></i>
+                            Generar PDF y Confirmar Salida
+                        </button>
+                        <a href="{% url 'core:dashboard_secretaria' %}" class="btn-secondary-custom">
+                            <i class="fas fa-times-circle"></i>
+                            Cancelar
+                        </a>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 </div>
@@ -362,14 +411,13 @@
 <script>
 $(document).ready(function() {
     // Contador de caracteres en tiempo real
-    const textarea = $('#id_contenido_respuesta');
+    const textarea = $('textarea[name="contenido_respuesta"]');
     const counter = $('#charCounter');
     
     textarea.on('input', function() {
         const count = $(this).val().length;
         counter.text(count + ' caracteres');
         
-        // Cambiar color si supera cierto límite (opcional)
         if (count > 5000) {
             counter.css('color', '#f59e0b');
         } else {
@@ -379,15 +427,22 @@ $(document).ready(function() {
     
     // Confirmación antes de enviar
     $('form').on('submit', function(e) {
+        const folio = $('input[name="folio_salida"]').val().trim();
         const content = textarea.val().trim();
         
-        if (content.length < 10) {
+        if (!folio) {
             e.preventDefault();
-            alert('La respuesta debe tener al menos 10 caracteres.');
+            alert('Debe ingresar el folio de salida.');
             return false;
         }
         
-        if (!confirm('¿Está seguro de enviar esta respuesta? Una vez confirmada, el documento cambiará de estado.')) {
+        if (content.length < 20) {
+            e.preventDefault();
+            alert('El contenido de la respuesta debe tener al menos 20 caracteres.');
+            return false;
+        }
+        
+        if (!confirm('¿Está seguro de generar el documento de salida? Se creará un PDF oficial y el documento cambiará de estado.')) {
             e.preventDefault();
             return false;
         }

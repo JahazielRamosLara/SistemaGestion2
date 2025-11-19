@@ -15,9 +15,28 @@ class TurnarDocumentoForm(forms.Form):
 
 class GenerarSalidaForm(forms.ModelForm):
     
+    contenido_respuesta = forms.CharField(
+        widget=forms.Textarea(attrs={
+            'class': 'form-control',
+            'rows': 10,
+            'placeholder': 'Escriba aquí el contenido de la respuesta oficial...',
+            'required': True
+        }),
+        label='Contenido de la Respuesta'
+    )
+    
     class Meta:
         model = Documento
-        fields = ["fecha_salida", "documento_salida"]
+        fields = ["folio_salida", "contenido_respuesta"]
+        widgets = {
+            "folio_salida": forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Ejemplo: OF/123/2025'
+            })
+        }
+        labels = {
+            "folio_salida": "Folio de Salida"
+        }
 
 class CapturaDocumentoForm(forms.ModelForm):
 
