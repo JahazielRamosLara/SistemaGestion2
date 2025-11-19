@@ -66,25 +66,56 @@ class Documento(models.Model):
     )
     responsables_adicionales = models.ManyToManyField(
         User,
-        related_name='documentos_adicionales', 
+        related_name="documentos_adicionales", 
         verbose_name="Otros",
         blank=True 
     )
     estatus_actual = models.ForeignKey(Estatus, on_delete = models.PROTECT, related_name = "documentos_en_estado")
 
+    resumen_responsable = models.TextField(
+        blank=True, 
+        null=True, 
+        verbose_name="Resumen del Responsable"
+    )
+
+    responsables_que_enviaron_resumen = models.ManyToManyField(
+        User,
+        related_name="documentos_con_resumen_enviado",
+        blank=True,
+        verbose_name="Responsables que enviaron resumen"
+    )
+
     #Salida
     #Documento de respuesta generado
     documento_salida = models.FileField(
-        upload_to='documentos/salidas/', 
+        upload_to = "documentos/salidas/", 
         null=True, blank=True, 
         verbose_name="Archivo de Salida (Respuesta)")
     fecha_archivo = models.DateField(
         null=True, blank=True, 
-        verbose_name="Fecha de Archivado")
+        verbose_name = "Fecha de Archivado")
     fecha_salida = models.DateField(
         null=True, blank=True, 
-        verbose_name="Fecha de Salida")
+        verbose_name = "Fecha de Salida")
+    folio_salida = models.CharField(
+        max_length=20, 
+        unique=True, 
+        null=True, 
+        blank=True,
+        help_text="Número de folio de salida.",
+        verbose_name = "Folio de Salida"
+    )
     
+    def todos_enviaron_resumen(self):
+        """Verifica si todos los responsables (principal + adicionales) enviaron su resumen"""
+    # Total de responsables = principal (1) + adicionales
+        total_responsables = 1 + self.responsables_adicionales.count()
+    
+    # Cuántos ya enviaron resumen
+        enviados = self.responsables_que_enviaron_resumen.count()
+    
+        return enviados >= total_responsables
+
     def __str__(self):
         return f"Folio {self.folio} - {self.estatus_actual.nombre}"
 
@@ -131,3 +162,16 @@ class TransicionEstatus(models.Model):
 
     def __str__(self):
         return f"Documento {self.documento.folio} - Turnado por {self.usuario_origen} a {self.responsable_destino}"
+    
+class ResumenResponsableAdicional(models.Model):
+    
+    documento = models.ForeignKey(Documento, on_delete=models.CASCADE, related_name='resumenes_adicionales')
+    responsable = models.ForeignKey(User, on_delete=models.CASCADE)
+    resumen = models.TextField(verbose_name="Resumen")
+    fecha_envio = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        unique_together = ['documento', 'responsable']
+    
+    def __str__(self):
+        return f"{self.responsable.username} - {self.documento.folio}"

@@ -25,6 +25,46 @@
         margin: 0;
     }
 
+    /* Pestañas de navegación */
+    .tabs-container {
+        display: flex;
+        gap: 15px;
+        margin-bottom: 25px;
+        border-bottom: 2px solid #f0f0f0;
+        padding-bottom: 0;
+    }
+
+    .tab-button {
+        background: transparent;
+        border: none;
+        border-bottom: 3px solid transparent;
+        padding: 15px 30px;
+        color: #718096;
+        font-weight: 600;
+        font-size: 15px;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        position: relative;
+        bottom: -2px;
+    }
+
+    .tab-button:hover {
+        color: #6b8fa3;
+        background: #f8f9fa;
+    }
+
+    .tab-button.active {
+        color: #6b8fa3;
+        border-bottom-color: #6b8fa3;
+    }
+
+    .tab-button i {
+        font-size: 16px;
+    }
+
     /* Alertas personalizadas */
     .messages {
         margin-bottom: 25px;
@@ -80,7 +120,7 @@
     }
 
     .table thead th {
-        color: #2c3e50;
+        color: white !important;
         font-weight: 600;
         font-size: 14px;
         padding: 18px 20px;
@@ -194,6 +234,26 @@
         background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
     }
 
+    .btn-info {
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        border: none;
+        border-radius: 50px;
+        padding: 8px 20px;
+        color: white;
+        font-weight: 600;
+        font-size: 13px;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .btn-info:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 15px rgba(59, 130, 246, 0.3);
+        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    }
+
     .btn-sm {
         padding: 7px 18px;
         font-size: 12px;
@@ -231,7 +291,8 @@
         }
 
         .btn-success,
-        .btn-danger {
+        .btn-danger,
+        .btn-info {
             padding: 6px 15px;
             font-size: 12px;
         }
@@ -244,6 +305,15 @@
 
         .table {
             min-width: 700px;
+        }
+
+        .tabs-container {
+            gap: 10px;
+        }
+
+        .tab-button {
+            padding: 12px 20px;
+            font-size: 14px;
         }
     }
 
@@ -265,7 +335,19 @@
     <!-- Header del Dashboard -->
     <div class="dashboard-header">
         <h2>Panel de Gestión - {{ user.username }}</h2>
-        <p>Oficios asignados para seguimiento y trámite.</p>
+        <p>{% if vista_actual == 'historial' %}Historial completo de oficios{% else %}Oficios asignados para seguimiento y trámite{% endif %}</p>
+    </div>
+
+    <!-- Pestañas de navegación -->
+    <div class="tabs-container">
+        <a href="?vista=pendientes" class="tab-button {% if vista_actual == 'pendientes' %}active{% endif %}">
+            <i class="fas fa-clock"></i>
+            Pendientes
+        </a>
+        <a href="?vista=historial" class="tab-button {% if vista_actual == 'historial' %}active{% endif %}">
+            <i class="fas fa-history"></i>
+            Historial
+        </a>
     </div>
     
     <!-- Mensajes del sistema -->
@@ -322,21 +404,54 @@
                                 Iniciar Trámite 
                             </a>
                         
-                        {# Si ya está en trámite o turnado, puede turnar o devolver para contestar #}
+                        {# Si ya está en trámite o turnado #}
                         {% elif documento.estatus_actual.nombre == 'En Trámite' or documento.estatus_actual.nombre == 'Turnado' %}
                             
-                            <a href="{% url 'core:devolver_para_contestar' pk=documento.pk %}" 
-                               class="btn btn-danger btn-sm"
-                               onclick="return confirm('¿Confirma que el requerimiento está listo y debe ser contestado?');">
-                                <i class="fas fa-reply"></i>
-                                Contestar por Memo 
-                            </a>
+                            {# Si es responsable principal #}
+                            {% if documento.responsable == user %}
+                                {% if documento.todos_enviaron_resumen %}
+                                    <a href="{% url 'core:devolver_para_contestar' pk=documento.pk %}" 
+                                       class="btn btn-danger btn-sm"
+                                       onclick="return confirm('¿Confirma que el requerimiento está listo y debe ser contestado?');">
+                                        <i class="fas fa-reply"></i>
+                                        Contestar por Memo 
+                                    </a>
+                                {% else %}
+                                    <span class="badge bg-warning text-dark">
+                                        <i class="fas fa-hourglass-half"></i>
+                                        Esperando resúmenes adicionales
+                                    </span>
+                                {% endif %}
+                            
+                            {# Si es responsable adicional y no ha enviado resumen #}
+                            {% else %}
+                                {% if user not in documento.responsables_que_enviaron_resumen.all %}
+                                    <a href="{% url 'core:iniciar_tramite' pk=documento.pk %}" 
+                                       class="btn btn-info btn-sm">
+                                        <i class="fas fa-edit"></i>
+                                        Enviar Resumen
+                                    </a>
+                                {% else %}
+                                    <span class="badge bg-success">
+                                        <i class="fas fa-check"></i>
+                                        Resumen Enviado
+                                    </span>
+                                {% endif %}
+                            {% endif %}
                             
                         {% elif documento.estatus_actual.nombre == 'Terminado' %}
                             <p class="text-success small mb-0">
                                 <i class="fas fa-check-circle"></i>
                                 Esperando acción de otra área
                             </p>
+                        
+                        {# Estados finalizados (historial) #}
+                        {% elif documento.estatus_actual.nombre == 'En Firma' or documento.estatus_actual.nombre == 'Archivado' %}
+                            <span class="badge bg-success">
+                                <i class="fas fa-check-circle"></i>
+                                Finalizado
+                            </span>
+                        
                         {% endif %}
                     </td>
                 </tr>

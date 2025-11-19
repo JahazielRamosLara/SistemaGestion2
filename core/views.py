@@ -1,12 +1,12 @@
 from django.shortcuts import render, get_object_or_404, redirect 
 from django.views.generic.edit import CreateView
-from .models import Documento, Estatus, Remitente, TransicionEstatus
+from .models import Documento, Estatus, Remitente, TransicionEstatus, ResumenResponsableAdicional
 from django.contrib.auth.mixins import UserPassesTestMixin, LoginRequiredMixin
 from django.db import transaction
 from django.core.mail import send_mail
 from django.contrib.auth.decorators import user_passes_test, login_required
 from django.contrib import messages
-from .forms import TurnarDocumentoForm, GenerarSalidaForm, CapturaDocumentoForm, RemitenteForm, TurnarDocumentoForm
+from .forms import TurnarDocumentoForm, GenerarSalidaForm, CapturaDocumentoForm, RemitenteForm, TurnarDocumentoForm, IniciarTramiteForm, ResumenAdicionalForm
 from django.views.generic import ListView, DetailView, View, UpdateView
 from django.db.models import Q
 from django.urls import reverse_lazy
@@ -123,11 +123,23 @@ class DashboardSecretariaView(LoginRequiredMixin, UserPassesTestMixin, ListView)
     
     def get_queryset(self):
         
-        estados_gestion_sec = ["Capturado", "Contestar por memo", "En Firma"]
+        vista = self.request.GET.get("vista", "pendientes")
 
+        if vista == "historial":
+            estados_finalizados = ["Archivado"]
+            return Documento.objects.filter(
+                estatus_actual__nombre__in = estados_finalizados
+                ).order_by("-id")
+        else:
+            estados_pendientes = ["Capturado", "Notificado", "En Trámite", "Turnado", "Contestar por memo", "En Firma"]
         return Documento.objects.filter(
-            estatus_actual__nombre__in = estados_gestion_sec
+            estatus_actual__nombre__in = estados_pendientes
         ).order_by("-id")
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["vista_actual"] = self.request.GET.get("vista", "pendientes")
+        return context
     
 class DashboardResponsableView(LoginRequiredMixin, UserPassesTestMixin, ListView):
 
@@ -139,13 +151,28 @@ class DashboardResponsableView(LoginRequiredMixin, UserPassesTestMixin, ListView
         return is_responsable(self.request.user)
     
     def get_queryset(self):
+        vista = self.request.GET.get("vista", "pendientes")
         
-        estados_gestion_responsable = ["Notificado", "En Trámite", "Turnado", "Terminado"]
-
-        return Documento.objects.filter(
-            Q(responsable=self.request.user) | Q(responsables_adicionales=self.request.user),
-            estatus_actual__nombre__in=estados_gestion_responsable
-        ).distinct().order_by("-id")
+        base_query = Documento.objects.filter(
+            Q(responsable=self.request.user) | Q(responsables_adicionales=self.request.user)
+        ).distinct()
+        
+        if vista == "historial":
+            estados_finalizados = ["Archivado"]
+            return base_query.filter(
+                estatus_actual__nombre__in = estados_finalizados
+            ).order_by("-id")
+        else:
+            
+            estados_pendientes = ["Capturado", "Notificado", "En Trámite", "Turnado", "Contestar por memo", "En Firma"]
+            return base_query.filter(
+                estatus_actual__nombre__in = estados_pendientes
+            ).order_by("-id")
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["vista_actual"] = self.request.GET.get("vista", "pendientes")
+        return context
     
 class DetalleDocumentoView(LoginRequiredMixin, DetailView):
     
@@ -262,41 +289,102 @@ def notificar_documento(request, pk):
 @user_passes_test(is_responsable)
 @transaction.atomic
 def iniciar_tramite(request, pk):
+    documento = get_object_or_404(Documento, pk=pk)
 
-    documento = get_object_or_404(Documento, pk = pk)
-
-    if documento.estatus_actual.nombre != "Notificado":
-        messages.error(request, "Error: Solo documentos en estado 'Notificado' pueden iniciar trámite.")
-        return redirect("core:detalle_documento", pk = pk)
+    # Verificar si es responsable principal o adicional
+    es_principal = documento.responsable == request.user
+    es_adicional = documento.responsables_adicionales.filter(id=request.user.id).exists()
     
-    try:
-        nuevo_estatus = Estatus.objects.get(nombre = "En Trámite")
-        documento.estatus_actual = nuevo_estatus
-        documento.save()
-        messages.success(request, f"Folio {documento.folio} marcado como 'En Trámite'.")
-    except Estatus.DoesNotExist:
-        messages.error(request, "Error interno: El estatus 'En Trámite' no existe.")
+    if not es_principal and not es_adicional:
+        messages.error(request, "Error: No tiene permisos para este documento.")
+        return redirect("core:dashboard_responsable")
 
-    return redirect("core:dashboard_responsable")
+    # Validación de estado
+    if es_principal:
+        if documento.estatus_actual.nombre != "Notificado":
+            messages.error(request, "Error: Solo documentos en estado 'Notificado' pueden iniciar trámite.")
+            return redirect("core:detalle_documento", pk=pk)
+    else:
+        if documento.estatus_actual.nombre not in ["Notificado", "En Trámite", "Turnado"]:
+            messages.error(request, "Error: No puede enviar resumen en el estado actual del documento.")
+            return redirect("core:detalle_documento", pk=pk)
+    
+    if request.method == "POST":
+        if es_principal:
+            # Formulario para responsable principal
+            form = IniciarTramiteForm(request.POST, instance=documento)
+            if form.is_valid():
+                form.save()
+                documento.responsables_que_enviaron_resumen.add(request.user)
+                
+                try:
+                    nuevo_estatus = Estatus.objects.get(nombre="En Trámite")
+                    documento.estatus_actual = nuevo_estatus
+                    documento.save()
+                    messages.success(request, f"Folio {documento.folio} marcado como 'En Trámite'.")
+                except Estatus.DoesNotExist:
+                    messages.error(request, "Error interno: El estatus 'En Trámite' no existe.")
+                    return redirect("core:detalle_documento", pk=pk)
+                
+                return redirect("core:dashboard_responsable")
+        else:
+            # Formulario para responsable adicional
+            form = ResumenAdicionalForm(request.POST)
+            if form.is_valid():
+                # Guardar resumen adicional
+                ResumenResponsableAdicional.objects.create(
+                    documento=documento,
+                    responsable=request.user,
+                    resumen=form.cleaned_data['resumen']
+                )
+                documento.responsables_que_enviaron_resumen.add(request.user)
+                messages.success(request, "Resumen enviado exitosamente.")
+                return redirect("core:dashboard_responsable")
+    else:
+        # Verificar si ya envió su resumen
+        if documento.responsables_que_enviaron_resumen.filter(id=request.user.id).exists():
+            messages.warning(request, "Ya ha enviado su resumen para este documento.")
+            return redirect("core:dashboard_responsable")
+        
+        if es_principal:
+            form = IniciarTramiteForm(instance=documento)
+        else:
+            form = ResumenAdicionalForm()
+    
+    context = {
+        "form": form, 
+        "documento": documento,
+        "es_adicional": es_adicional
+    }
+    return render(request, "core/iniciar_tramite.html", context)
 
 @user_passes_test(is_responsable)
 @transaction.atomic
 def devolver_para_contestar(request, pk):
-    
-    documento = get_object_or_404(Documento, pk = pk)
+    documento = get_object_or_404(Documento, pk=pk)
 
-    estado_actual = documento.estatus_actual.nombre
-    if estado_actual != "En Trámite":
-        messages.error(request, "Error: Solo documentos en estado 'En Trámite' pueden devolverse para contestar.")
+    # Solo el responsable principal puede devolver
+    if documento.responsable != request.user:
+        messages.error(request, "Error: Solo el responsable principal puede devolver el documento.")
+        return redirect("core:detalle_documento", pk=pk)
+    
+    # Verificar que todos hayan enviado resumen
+    if not documento.todos_enviaron_resumen():
+        messages.error(request, "Error: Debe esperar a que todos los responsables adicionales envíen su resumen.")
+        return redirect("core:dashboard_responsable")
+
+    if documento.estatus_actual.nombre != "En Trámite":
+        messages.error(request, "Error: Solo documentos en estado 'En Trámite' pueden devolverse.")
         return redirect("core:detalle_documento", pk=pk)
     
     try:
-        nuevo_estatus = Estatus.objects.get(nombre = "Contestar por memo")
+        nuevo_estatus = Estatus.objects.get(nombre="Contestar por memo")
         documento.estatus_actual = nuevo_estatus
         documento.save()
-        messages.success(request, f"Folio {documento.folio} devuelto a Secretaria para 'Contestar por memo'.")
+        messages.success(request, f"Folio {documento.folio} devuelto a Secretaría para 'Contestar por memo'.")
     except Estatus.DoesNotExist:
         messages.error(request, "Error: El estatus de destino no existe.")
+    
     return redirect("core:dashboard_responsable")
     
 
@@ -357,31 +445,39 @@ def archivar_documento(request, pk):
 @transaction.atomic
 def generar_salida(request, pk):
     
-    documento = get_object_or_404(Documento, pk = pk)
+    documento = get_object_or_404(Documento, pk=pk)
 
     if documento.estatus_actual.nombre != "Contestar por memo":
         messages.error(request, "Error: El documento no puede ser respondido en este estado.")
-        return redirect("core:detalle_documento", pk = pk)
+        return redirect("core:detalle_documento", pk=pk)
     
     if request.method == "POST":
-        form = GenerarSalidaForm(request.POST, request.FILES, instance = documento)
+        form = GenerarSalidaForm(request.POST, request.FILES, instance=documento)
 
         if form.is_valid():
             form.save()
 
             try:
-                estatus_archivado = Estatus.objects.get(nombre = "En Firma")
+                estatus_archivado = Estatus.objects.get(nombre="En Firma")
                 documento.estatus_actual = estatus_archivado
                 documento.save()
                 messages.success(request, f"Folio {documento.folio} marcado como 'En Firma'.")
                 return redirect("core:dashboard_secretaria")
             except Estatus.DoesNotExist:
                 messages.error(request, "Error interno: El estatus 'En Firma' no existe.")
-                return redirect("detalle_documento", pk = pk)
+                return redirect("detalle_documento", pk=pk)
     else:
-        form = GenerarSalidaForm(instance = documento)
+        form = GenerarSalidaForm(instance=documento)
 
-    return render(request, "core/generar_salida.html", {"form": form, "documento": documento})
+    resumenes_adicionales = documento.resumenes_adicionales.select_related('responsable').all()
+
+    context = {
+        "form": form,
+        "documento": documento,
+        "resumenes_adicionales": resumenes_adicionales 
+    }
+    
+    return render(request, "core/generar_salida.html", context)
 
 @login_required
 def home_redirect(request):

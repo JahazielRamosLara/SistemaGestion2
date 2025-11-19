@@ -88,4 +88,30 @@ class RemitenteForm(forms.ModelForm):
         
         self.fields['trato'].choices
         
-        
+class IniciarTramiteForm(forms.ModelForm):
+
+    class Meta:
+
+        model = Documento
+        fields = ["resumen_responsable"]
+        widgets = {
+            "resumen_responsable": forms.Textarea(attrs={
+                "class": "form-control",
+                "rows": 5,
+                "placeholder": "Escriba un resumen breve del trámite que va a realizar..."
+            })
+        }
+        labels = {
+            "resumen_responsable": "Resumen del Trámite"
+        }
+
+class ResumenAdicionalForm(forms.Form):
+    resumen = forms.CharField(
+        widget=forms.Textarea(attrs={
+            'class': 'form-control',
+            'rows': 6,
+            'placeholder': 'Escriba su resumen como responsable adicional...',
+            'required': True
+        }),
+        label='Su Resumen'
+    )
