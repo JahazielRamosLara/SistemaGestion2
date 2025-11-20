@@ -11,6 +11,8 @@ from datetime import datetime
 from reportlab.pdfgen import canvas
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfbase import pdfmetrics
+from reportlab.lib.fonts import addMapping
+import os
 
 def enviar_notificacion_documento(documento, responsables):
     """
@@ -83,20 +85,31 @@ def generar_pdf_salida(documento, asunto_salida, contenido_respuesta):
     import os
     
     # Intentar diferentes rutas para encontrar Arial Narrow
+    # PRIORIDAD: PythonAnywhere (~/.fonts) primero
     posibles_rutas = [
+        os.path.expanduser('~/.fonts/arialn.ttf'),  # PythonAnywhere - usuario (minúsculas)
+        os.path.expanduser('~/.fonts/ARIALN.TTF'),  # PythonAnywhere - usuario (mayúsculas)
+        os.path.join(os.path.dirname(__file__), 'fonts', 'arialn.ttf'),  # Carpeta local
+        os.path.join(os.path.dirname(__file__), 'fonts', 'ARIALN.TTF'),
         'C:/Windows/Fonts/ARIALN.TTF',  # Windows
         'C:/WINDOWS/Fonts/ARIALN.TTF',
-        '/usr/share/fonts/truetype/msttcorefonts/ARIALN.TTF',  # Linux
+        'C:/Windows/Fonts/arialn.ttf',
+        '/usr/share/fonts/truetype/msttcorefonts/ARIALN.TTF',  # Linux sistema
+        '/usr/share/fonts/truetype/msttcorefonts/arialn.ttf',
         '/System/Library/Fonts/ARIALN.TTF',  # Mac
-        os.path.join(os.path.dirname(__file__), 'fonts', 'ARIALN.TTF'),  # Carpeta local
     ]
     
     posibles_rutas_bold = [
-        'C:/Windows/Fonts/ARIALNB.TTF',
-        'C:/WINDOWS/Fonts/ARIALNB.TTF',
-        '/usr/share/fonts/truetype/msttcorefonts/ARIALNB.TTF',
-        '/System/Library/Fonts/ARIALNB.TTF',
+        os.path.expanduser('~/.fonts/arialnb.ttf'),  # PythonAnywhere - usuario (minúsculas)
+        os.path.expanduser('~/.fonts/ARIALNB.TTF'),  # PythonAnywhere - usuario (mayúsculas)
+        os.path.join(os.path.dirname(__file__), 'fonts', 'arialnb.ttf'),  # Carpeta local
         os.path.join(os.path.dirname(__file__), 'fonts', 'ARIALNB.TTF'),
+        'C:/Windows/Fonts/ARIALNB.TTF',  # Windows
+        'C:/WINDOWS/Fonts/ARIALNB.TTF',
+        'C:/Windows/Fonts/arialnb.ttf',
+        '/usr/share/fonts/truetype/msttcorefonts/ARIALNB.TTF',  # Linux sistema
+        '/usr/share/fonts/truetype/msttcorefonts/arialnb.ttf',
+        '/System/Library/Fonts/ARIALNB.TTF',  # Mac
     ]
     
     # Buscar y registrar Arial Narrow
@@ -106,8 +119,10 @@ def generar_pdf_salida(documento, asunto_salida, contenido_respuesta):
             try:
                 pdfmetrics.registerFont(TTFont('ArialNarrow', ruta))
                 font_registered = True
+                print(f"✓ Arial Narrow registrada desde: {ruta}")
                 break
-            except:
+            except Exception as e:
+                print(f"✗ Error al registrar {ruta}: {e}")
                 continue
     
     # Buscar y registrar Arial Narrow Bold
@@ -117,24 +132,29 @@ def generar_pdf_salida(documento, asunto_salida, contenido_respuesta):
             try:
                 pdfmetrics.registerFont(TTFont('ArialNarrow-Bold', ruta))
                 bold_registered = True
+                print(f"✓ Arial Narrow Bold registrada desde: {ruta}")
                 break
-            except:
+            except Exception as e:
+                print(f"✗ Error al registrar {ruta}: {e}")
                 continue
     
-    if not font_registered or not bold_registered:
-        font_name_bold = 'Helvetica-Bold'       
-    font_name = 'ArialNarrow'
-    font_name_bold = 'ArialNarrow-Bold'
+    # Si no se registraron las fuentes, usar Helvetica como fallback
+    if not font_registered:
+        print("⚠ Arial Narrow no encontrada, usando Helvetica")
+        font_name = 'Helvetica'
+    else:
+        font_name = 'ArialNarrow'
     
-    # Márgenes exactos: superior 1.25cm, inferior 1.5cm, izquierdo 6.5cm, derecho 1.6cm
-    doc = SimpleDocTemplate(
-        buffer, 
-        pagesize=media_carta,
-        leftMargin=6.5*cm,
-        rightMargin=1.6*cm,
-        topMargin=1.25*cm,
-        bottomMargin=1.5*cm
-    )
+    if not bold_registered:
+        print("⚠ Arial Narrow Bold no encontrada, usando Helvetica-Bold")
+        font_name_bold = 'Helvetica-Bold'
+    else:
+        font_name_bold = 'ArialNarrow-Bold'
+    
+    # Mapear la familia de fuentes para que ReportLab las reconozca correctamente
+    if font_registered and bold_registered:
+        addMapping('ArialNarrow', 0, 0, 'ArialNarrow')       # normal
+        addMapping('ArialNarrow', 1, 0, 'ArialNarrow-Bold')  # bold
     
     # Márgenes exactos: superior 1.25cm, inferior 1.5cm, izquierdo 6.5cm, derecho 1.6cm
     doc = SimpleDocTemplate(
@@ -340,20 +360,29 @@ def generar_pdf_salida_carta(documento, asunto_salida, contenido_respuesta):
     import os
     
     # Intentar diferentes rutas para encontrar Arial
+    # PRIORIDAD: PythonAnywhere (~/.fonts) primero
     posibles_rutas = [
-        'C:/Windows/Fonts/ARIAL.TTF',
-        'C:/WINDOWS/Fonts/ARIAL.TTF',
-        '/usr/share/fonts/truetype/msttcorefonts/arial.ttf',
-        '/System/Library/Fonts/Arial.ttf',
+        os.path.expanduser('~/.fonts/arial.ttf'),  # PythonAnywhere - usuario (minúsculas)
+        os.path.expanduser('~/.fonts/ARIAL.TTF'),  # PythonAnywhere - usuario (mayúsculas)
+        os.path.join(os.path.dirname(__file__), 'fonts', 'arial.ttf'),  # Carpeta local
         os.path.join(os.path.dirname(__file__), 'fonts', 'ARIAL.TTF'),
+        'C:/Windows/Fonts/ARIAL.TTF',  # Windows
+        'C:/WINDOWS/Fonts/ARIAL.TTF',
+        'C:/Windows/Fonts/arial.ttf',
+        '/usr/share/fonts/truetype/msttcorefonts/arial.ttf',  # Linux sistema
+        '/System/Library/Fonts/Arial.ttf',  # Mac
     ]
     
     posibles_rutas_bold = [
-        'C:/Windows/Fonts/ARIALBD.TTF',
-        'C:/WINDOWS/Fonts/ARIALBD.TTF',
-        '/usr/share/fonts/truetype/msttcorefonts/arialbd.ttf',
-        '/System/Library/Fonts/Arial Bold.ttf',
+        os.path.expanduser('~/.fonts/arialbd.ttf'),  # PythonAnywhere - usuario (minúsculas)
+        os.path.expanduser('~/.fonts/ARIALBD.TTF'),  # PythonAnywhere - usuario (mayúsculas)
+        os.path.join(os.path.dirname(__file__), 'fonts', 'arialbd.ttf'),  # Carpeta local
         os.path.join(os.path.dirname(__file__), 'fonts', 'ARIALBD.TTF'),
+        'C:/Windows/Fonts/ARIALBD.TTF',  # Windows
+        'C:/WINDOWS/Fonts/ARIALBD.TTF',
+        'C:/Windows/Fonts/arialbd.ttf',
+        '/usr/share/fonts/truetype/msttcorefonts/arialbd.ttf',  # Linux sistema
+        '/System/Library/Fonts/Arial Bold.ttf',  # Mac
     ]
     
     # Buscar y registrar Arial
@@ -363,8 +392,10 @@ def generar_pdf_salida_carta(documento, asunto_salida, contenido_respuesta):
             try:
                 pdfmetrics.registerFont(TTFont('Arial', ruta))
                 font_registered = True
+                print(f"✓ Arial registrada desde: {ruta}")
                 break
-            except:
+            except Exception as e:
+                print(f"✗ Error al registrar {ruta}: {e}")
                 continue
     
     # Buscar y registrar Arial Bold
@@ -374,14 +405,29 @@ def generar_pdf_salida_carta(documento, asunto_salida, contenido_respuesta):
             try:
                 pdfmetrics.registerFont(TTFont('Arial-Bold', ruta))
                 bold_registered = True
+                print(f"✓ Arial Bold registrada desde: {ruta}")
                 break
-            except:
+            except Exception as e:
+                print(f"✗ Error al registrar {ruta}: {e}")
                 continue
     
-    if not font_registered or not bold_registered:
-        font_name_bold = 'Helvetica-Bold'       
-    font_name = 'Arial'
-    font_name_bold = 'Arial-Bold'
+    # Si no se registraron las fuentes, usar Helvetica como fallback
+    if not font_registered:
+        print("⚠ Arial no encontrada, usando Helvetica")
+        font_name = 'Helvetica'
+    else:
+        font_name = 'Arial'
+    
+    if not bold_registered:
+        print("⚠ Arial Bold no encontrada, usando Helvetica-Bold")
+        font_name_bold = 'Helvetica-Bold'
+    else:
+        font_name_bold = 'Arial-Bold'
+    
+    # Mapear la familia de fuentes para que ReportLab las reconozca correctamente
+    if font_registered and bold_registered:
+        addMapping('Arial', 0, 0, 'Arial')       # normal
+        addMapping('Arial', 1, 0, 'Arial-Bold')  # bold
     
     # Márgenes: superior 1.75cm, inferior 1.5cm, izquierdo 5.5cm, derecho 1.5cm
     doc = SimpleDocTemplate(
