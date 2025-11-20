@@ -122,8 +122,7 @@ def generar_pdf_salida(documento, asunto_salida, contenido_respuesta):
                 continue
     
     if not font_registered or not bold_registered:
-        raise Exception("Arial Narrow no encontrado. Por favor, asegúrate de que los archivos ARIALN.TTF y ARIALNB.TTF estén disponibles.")
-    
+        font_name_bold = 'Helvetica-Bold'       
     font_name = 'ArialNarrow'
     font_name_bold = 'ArialNarrow-Bold'
     
@@ -380,8 +379,7 @@ def generar_pdf_salida_carta(documento, asunto_salida, contenido_respuesta):
                 continue
     
     if not font_registered or not bold_registered:
-        raise Exception("Arial no encontrado. Por favor, asegúrate de que los archivos ARIAL.TTF y ARIALBD.TTF estén disponibles.")
-    
+        font_name_bold = 'Helvetica-Bold'       
     font_name = 'Arial'
     font_name_bold = 'Arial-Bold'
     
