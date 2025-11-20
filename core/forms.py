@@ -15,6 +15,16 @@ class TurnarDocumentoForm(forms.Form):
 
 class GenerarSalidaForm(forms.ModelForm):
     
+    asunto_salida = forms.CharField(
+        max_length=255,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Escriba el asunto del documento de salida...'
+        }),
+        label='Asunto de la Respuesta',
+        help_text='Este será el asunto que aparecerá en el documento de salida'
+    )
+    
     contenido_respuesta = forms.CharField(
         widget=forms.Textarea(attrs={
             'class': 'form-control',
@@ -27,11 +37,11 @@ class GenerarSalidaForm(forms.ModelForm):
     
     class Meta:
         model = Documento
-        fields = ["folio_salida", "contenido_respuesta"]
+        fields = ["folio_salida", "asunto_salida", "contenido_respuesta"]
         widgets = {
             "folio_salida": forms.TextInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'Ejemplo: OF/123/2025'
+                'placeholder': 'Ejemplo: OF/INF/123/2025'
             })
         }
         labels = {

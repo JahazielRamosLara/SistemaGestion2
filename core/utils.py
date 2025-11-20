@@ -5,9 +5,10 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import inch
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
 from reportlab.lib import colors
-from reportlab.lib.enums import TA_CENTER, TA_JUSTIFY
+from reportlab.lib.enums import TA_CENTER, TA_JUSTIFY, TA_LEFT, TA_RIGHT
 from io import BytesIO
 from datetime import datetime
+from reportlab.pdfgen import canvas
 
 def enviar_notificacion_documento(documento, responsables):
     """
@@ -66,14 +67,21 @@ Congreso del Estado de Jalisco
         print(f"Error al enviar correo: {e}")
         return False
     
-def generar_pdf_salida(documento, contenido_respuesta):
+def generar_pdf_salida(documento, asunto_salida, contenido_respuesta):
     """
-    Genera un PDF de documento de salida oficial
+    Genera un PDF de documento de salida oficial estilo memorándum
     """
     buffer = BytesIO()
-    doc = SimpleDocTemplate(buffer, pagesize=letter,
-                          rightMargin=72, leftMargin=72,
-                          topMargin=72, bottomMargin=18)
+    
+    # Configurar el documento con márgenes más amplios
+    doc = SimpleDocTemplate(
+        buffer, 
+        pagesize=letter,
+        rightMargin=1.2*inch, 
+        leftMargin=1.2*inch,
+        topMargin=1*inch, 
+        bottomMargin=1*inch
+    )
     
     # Contenedor para los elementos del PDF
     elements = []
@@ -81,120 +89,198 @@ def generar_pdf_salida(documento, contenido_respuesta):
     # Estilos
     styles = getSampleStyleSheet()
     
-    # Estilo para el encabezado
+    # Estilo para el encabezado superior (GOBIERNO, PODER, SECRETARÍA)
     header_style = ParagraphStyle(
         'CustomHeader',
-        parent=styles['Heading1'],
-        fontSize=14,
-        textColor=colors.HexColor('#2c3e50'),
-        spaceAfter=30,
-        alignment=TA_CENTER,
-        fontName='Helvetica-Bold'
-    )
-    
-    # Estilo para subtítulos
-    subtitle_style = ParagraphStyle(
-        'Subtitle',
         parent=styles['Normal'],
         fontSize=11,
-        textColor=colors.HexColor('#2c3e50'),
-        spaceAfter=20,
+        textColor=colors.black,
+        spaceAfter=3,
         alignment=TA_CENTER,
-        fontName='Helvetica'
+        fontName='Helvetica-Bold',
+        leading=13
     )
     
-    # Estilo para el contenido
+    # Estilo para el área e info superior derecha
+    area_style = ParagraphStyle(
+        'AreaStyle',
+        parent=styles['Normal'],
+        fontSize=9,
+        textColor=colors.black,
+        alignment=TA_RIGHT,
+        fontName='Helvetica',
+        leading=11
+    )
+    
+    # Estilo para datos dentro del cuadro
+    value_style = ParagraphStyle(
+        'ValueStyle',
+        parent=styles['Normal'],
+        fontSize=10,
+        textColor=colors.black,
+        fontName='Helvetica',
+        leading=13,
+        leftIndent=15,
+        rightIndent=15
+    )
+    
+    # Estilo para el contenido justificado
     content_style = ParagraphStyle(
         'Content',
         parent=styles['BodyText'],
-        fontSize=11,
-        textColor=colors.HexColor('#333333'),
+        fontSize=10,
+        textColor=colors.black,
         alignment=TA_JUSTIFY,
-        spaceAfter=12,
-        leading=16
+        leading=14,
+        leftIndent=15,
+        rightIndent=15,
+        spaceBefore=4,
+        spaceAfter=4
     )
     
-    # Estilo para datos en negritas
-    bold_style = ParagraphStyle(
-        'Bold',
+    # Estilo para "Atentamente" (alineado a la izquierda)
+    atentamente_style = ParagraphStyle(
+        'Atentamente',
         parent=styles['Normal'],
-        fontSize=11,
-        textColor=colors.HexColor('#2c3e50'),
-        fontName='Helvetica-Bold'
+        fontSize=10,
+        textColor=colors.black,
+        alignment=TA_LEFT,
+        fontName='Helvetica-Bold',
+        spaceAfter=40,
+        spaceBefore=25,
+        leftIndent=15
     )
     
-    # === ENCABEZADO ===
+    # Estilo para firma y cargo (alineado a la izquierda)
+    firma_style = ParagraphStyle(
+        'Firma',
+        parent=styles['Normal'],
+        fontSize=9,
+        textColor=colors.black,
+        alignment=TA_LEFT,
+        fontName='Helvetica-Bold',
+        leading=11,
+        leftIndent=15
+    )
+    
+    # === ENCABEZADO SUPERIOR ===
     elements.append(Paragraph("GOBIERNO DEL ESTADO DE JALISCO", header_style))
-    elements.append(Paragraph("PODER LEGISLATIVO", subtitle_style))
-    elements.append(Paragraph("SECRETARÍA DEL CONGRESO", subtitle_style))
+    elements.append(Paragraph("PODER LEGISLATIVO", header_style))
+    elements.append(Paragraph("SECRETARÍA DEL CONGRESO", header_style))
     elements.append(Spacer(1, 0.3*inch))
     
-    # === INFORMACIÓN DEL DOCUMENTO ===
-    info_data = [
-        ["Folio de Salida:", documento.folio_salida or "N/A"],
-        ["Fecha:", documento.fecha_salida.strftime("%d de %B de %Y") if documento.fecha_salida else "N/A"],
-        ["Turno del folio:", documento.folio],
-        ["Asunto:", documento.asunto],
-        ["Destinatario:", str(documento.remitente)],
-    ]
+    # === INICIO DEL CUADRO ===
+    cuadro_content = []
     
-    info_table = Table(info_data, colWidths=[2*inch, 4*inch])
-    info_table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (0, -1), colors.HexColor('#f0f0f0')),
-        ('TEXTCOLOR', (0, 0), (0, -1), colors.HexColor('#2c3e50')),
-        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-        ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
-        ('FONTSIZE', (0, 0), (-1, -1), 10),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
-        ('TOPPADDING', (0, 0), (-1, -1), 8),
-        ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
-    ]))
+    # Obtener la fecha en formato español
+    meses = {
+        1: 'enero', 2: 'febrero', 3: 'marzo', 4: 'abril',
+        5: 'mayo', 6: 'junio', 7: 'julio', 8: 'agosto',
+        9: 'septiembre', 10: 'octubre', 11: 'noviembre', 12: 'diciembre'
+    }
     
-    elements.append(info_table)
-    elements.append(Spacer(1, 0.4*inch))
+    if documento.fecha_salida:
+        año = documento.fecha_salida.year
+        dia = documento.fecha_salida.day
+        mes = meses[documento.fecha_salida.month]
+        fecha_texto = f"Guadalajara, Jalisco a {dia} de {mes} de {año}"
+    else:
+        año = "2025"
+        fecha_texto = "Guadalajara, Jalisco"
+    
+    # Formatear el folio como INF-M/foliosalida/año
+    folio_formateado = f"INF-M/{documento.folio_salida}/{año}"
+    
+    # Info superior derecha dentro del cuadro
+    info_superior_derecha = f"""
+    <b>{folio_formateado}</b><br/>
+    {fecha_texto}
+    """
+    
+    cuadro_content.append([Paragraph(info_superior_derecha, area_style)])
+    
+    # Espaciado inicial dentro del cuadro
+    cuadro_content.append([Spacer(1, 0.15*inch)])
+    
+    # Información del destinatario (remitente original)
+    nombre_completo = f"{documento.remitente.trato}. {documento.remitente.nombre}" if documento.remitente else "N/A"
+    cargo_destinatario = documento.remitente.area if documento.remitente and documento.remitente.area else "N/A"
+    
+    info_destinatario = f"""
+    <b>{nombre_completo}</b><br/>
+    {cargo_destinatario}
+    """
+    cuadro_content.append([Paragraph(info_destinatario, value_style)])
+    
+    cuadro_content.append([Spacer(1, 0.15*inch)])
+    
+    # Turno del folio
+    turno_text = f"<b>Turno del folio: {documento.folio}</b>"
+    cuadro_content.append([Paragraph(turno_text, value_style)])
+    
+    cuadro_content.append([Spacer(1, 0.15*inch)])
+    
+    # Asunto
+    asunto_text = f"<b>Asunto:</b><br/>{asunto_salida}"
+    cuadro_content.append([Paragraph(asunto_text, value_style)])
+    
+    # Espacio reducido entre asunto y contenido
+    cuadro_content.append([Spacer(1, 0.15*inch)])
     
     # === CONTENIDO DE LA RESPUESTA ===
-    elements.append(Paragraph("<b>Contenido de la Respuesta:</b>", bold_style))
-    elements.append(Spacer(1, 0.15*inch))
-    
-    # Dividir el contenido en párrafos
+    # Agregar cada párrafo del contenido
     paragraphs = contenido_respuesta.split('\n')
     for para in paragraphs:
         if para.strip():
-            elements.append(Paragraph(para, content_style))
+            cuadro_content.append([Paragraph(para.strip(), content_style)])
     
-    elements.append(Spacer(1, 0.5*inch))
+    # Espacio antes de la firma
+    cuadro_content.append([Spacer(1, 0.3*inch)])
     
-    # === RESÚMENES DE RESPONSABLES ===
-    if documento.resumen_responsable:
-        elements.append(Paragraph("<b>Resumen del Responsable Principal:</b>", bold_style))
-        elements.append(Spacer(1, 0.1*inch))
-        elements.append(Paragraph(f"<b>{documento.responsable.username}:</b> {documento.resumen_responsable}", content_style))
-        elements.append(Spacer(1, 0.2*inch))
+    # === PIE DEL DOCUMENTO (alineado a la izquierda) ===
+    cuadro_content.append([Paragraph("Atentamente", atentamente_style)])
     
-    # Resúmenes adicionales
-    resumenes_adicionales = documento.resumenes_adicionales.all()
-    if resumenes_adicionales:
-        elements.append(Paragraph("<b>Resúmenes de Responsables Adicionales:</b>", bold_style))
-        elements.append(Spacer(1, 0.1*inch))
-        for resumen in resumenes_adicionales:
-            elements.append(Paragraph(f"<b>{resumen.responsable.username}:</b> {resumen.resumen}", content_style))
-            elements.append(Spacer(1, 0.1*inch))
+    # Espacio para firma (línea alineada a la izquierda)
+    cuadro_content.append([Paragraph("_________________________________", firma_style)])
     
-    elements.append(Spacer(1, 0.5*inch))
+    # Nombre y cargo del firmante (alineado a la izquierda)
+    firma_texto = """
+    <b>Lic. Verónica Salazar Serrano</b><br/>
+    <b>Coordinadora de Servicios Generales</b>
+    """
+    cuadro_content.append([Paragraph(firma_texto, firma_style)])
     
-    # === PIE DE PÁGINA ===
-    footer_style = ParagraphStyle(
-        'Footer',
+    # Espaciado antes de la frase
+    cuadro_content.append([Spacer(1, 0.15*inch)])
+    
+    # Frase del año (cursiva, centrada, pequeña)
+    frase_style = ParagraphStyle(
+        'FraseAnio',
         parent=styles['Normal'],
-        fontSize=9,
+        fontSize=7,
         textColor=colors.grey,
-        alignment=TA_CENTER
+        alignment=TA_CENTER,
+        fontName='Helvetica-Oblique'
     )
     
-    elements.append(Spacer(1, 0.5*inch))
-    elements.append(Paragraph("___________________________________", footer_style))
-    elements.append(Paragraph("Coordinador de Servicios Generales", footer_style))
+    frase_texto = "2025, año de la eliminación de la transmisión materno infantil de enfermedades infecciosas"
+    cuadro_content.append([Paragraph(frase_texto, frase_style)])
+    
+    # Espaciado final
+    cuadro_content.append([Spacer(1, 0.15*inch)])
+    
+    # Crear la tabla con todo el contenido del cuadro
+    main_table = Table(cuadro_content, colWidths=[6*inch])
+    main_table.setStyle(TableStyle([
+        ('BOX', (0, 0), (-1, -1), 1.5, colors.black),  # Borde exterior del cuadro
+        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+        ('TOPPADDING', (0, 0), (-1, -1), 8),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+        ('LEFTPADDING', (0, 0), (-1, -1), 8),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 8),
+    ]))
+    
+    elements.append(main_table)
     
     # Construir el PDF
     doc.build(elements)

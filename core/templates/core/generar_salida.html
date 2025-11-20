@@ -61,7 +61,7 @@
 
     /* Cajas de resúmenes */
     .responsable-summary {
-        background: #f0f9ff;
+        background: #eee;
         border-left: 4px solid #3b82f6;
         border-radius: 12px;
         padding: 20px;
@@ -69,7 +69,7 @@
     }
 
     .responsable-summary.adicional {
-        background: #f0fdf4;
+        background: #eee;
         border-left-color: #10b981;
     }
 
@@ -372,14 +372,27 @@
                                 <small class="text-danger">{{ form.folio_salida.errors }}</small>
                             {% endif %}
                             <small class="text-muted d-block mt-1">
-                                La fecha se generará automáticamente al confirmar
+                                
                             </small>
                         </div>
                     </div>
 
                     <div class="mb-3">
+                        <label for="{{ form.asunto_salida.id_for_label }}" class="form-label">
+                            Asunto:
+                        </label>
+                        {{ form.asunto_salida }}
+                        {% if form.asunto_salida.errors %}
+                            <small class="text-danger">{{ form.asunto_salida.errors }}</small>
+                        {% endif %}
+                        <small class="text-muted d-block mt-1">
+                            Este será el asunto que aparecerá en el documento oficial de salida
+                        </small>
+                    </div>
+
+                    <div class="mb-3">
                         <label for="{{ form.contenido_respuesta.id_for_label }}" class="form-label">
-                            Contenido de la Respuesta:
+                            Contenido:
                         </label>
                         {{ form.contenido_respuesta }}
                         {% if form.contenido_respuesta.errors %}

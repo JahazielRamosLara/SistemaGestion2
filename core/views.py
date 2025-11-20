@@ -459,15 +459,16 @@ def generar_salida(request, pk):
         if form.is_valid():
             # Obtener datos del formulario
             folio_salida = form.cleaned_data['folio_salida']
+            asunto_salida = form.cleaned_data['asunto_salida']
             contenido_respuesta = form.cleaned_data['contenido_respuesta']
             
             # Asignar folio y fecha automática
             documento.folio_salida = folio_salida
             documento.fecha_salida = date.today()
             
-            # Generar el PDF
+            # Generar el PDF con el nuevo parámetro asunto_salida
             try:
-                pdf_content = generar_pdf_salida(documento, contenido_respuesta)
+                pdf_content = generar_pdf_salida(documento, asunto_salida, contenido_respuesta)
                 
                 # Guardar el PDF en el campo documento_salida
                 nombre_archivo = f"salida_{documento.folio_salida.replace('/', '_')}.pdf"
