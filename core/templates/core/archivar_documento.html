@@ -1,0 +1,329 @@
+{% extends 'base.html' %}
+
+{% block title %}Archivar Documento{% endblock %}
+
+{% block extra_css %}
+<style>
+    .archive-card {
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        overflow: hidden;
+        margin-top: 30px;
+    }
+
+    .card-header-archive {
+        background: linear-gradient(135deg, #64748b 0%, #475569 100%);
+        padding: 25px 30px;
+        border: none;
+    }
+
+    .card-header-archive h2 {
+        color: white;
+        font-weight: 600;
+        font-size: 24px;
+        margin: 0;
+    }
+
+    .card-body-archive {
+        padding: 35px 40px;
+    }
+
+    .document-info {
+        background: #f8f9fa;
+        border-left: 4px solid #64748b;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 30px;
+    }
+
+    .document-info p {
+        margin-bottom: 8px;
+        font-size: 15px;
+        color: #334155;
+        line-height: 1.6;
+    }
+
+    .document-info p:last-child {
+        margin-bottom: 0;
+    }
+
+    .document-info strong {
+        font-weight: 700;
+        color: #1e293b;
+    }
+
+    .format-section {
+        margin-top: 30px;
+    }
+
+    .format-title {
+        color: #2c3e50;
+        font-weight: 700;
+        font-size: 18px;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 3px solid #64748b;
+        display: inline-block;
+    }
+
+    .format-options {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 20px;
+        margin-top: 20px;
+    }
+
+    .format-option {
+        border: 2px solid #e8e8e8;
+        border-radius: 12px;
+        padding: 25px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        background: white;
+    }
+
+    .format-option:hover {
+        border-color: #64748b;
+        box-shadow: 0 4px 15px rgba(100, 116, 139, 0.2);
+        transform: translateY(-2px);
+    }
+
+    .format-option.selected {
+        border-color: #64748b;
+        background: #f1f5f9;
+    }
+
+    .format-option input[type="radio"] {
+        display: none;
+    }
+
+    .format-option label {
+        cursor: pointer;
+        display: block;
+        margin: 0;
+    }
+
+    .format-name {
+        font-size: 20px;
+        font-weight: 700;
+        color: #1e293b;
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .format-details {
+        font-size: 14px;
+        color: #64748b;
+        line-height: 1.6;
+    }
+
+    .format-details li {
+        margin-bottom: 5px;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 15px;
+        margin-top: 35px;
+        padding-top: 25px;
+        border-top: 2px solid #f0f0f0;
+        justify-content: flex-end;
+    }
+
+    .btn-archive {
+        background: linear-gradient(135deg, #64748b 0%, #475569 100%);
+        border: none;
+        border-radius: 50px;
+        padding: 14px 40px;
+        color: white;
+        font-weight: 600;
+        font-size: 16px;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .btn-archive:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(100, 116, 139, 0.4);
+        background: linear-gradient(135deg, #475569 0%, #334155 100%);
+        color: white;
+    }
+
+    .btn-archive:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none;
+    }
+
+    .btn-cancel {
+        background: #e8e8e8;
+        border: none;
+        border-radius: 50px;
+        padding: 14px 40px;
+        color: #666;
+        font-weight: 600;
+        font-size: 16px;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .btn-cancel:hover {
+        background: #ddd;
+        color: #333;
+        transform: translateY(-2px);
+    }
+
+    @media (max-width: 768px) {
+        .card-body-archive {
+            padding: 25px 20px;
+        }
+
+        .format-options {
+            grid-template-columns: 1fr;
+        }
+
+        .action-buttons {
+            flex-direction: column;
+        }
+
+        .btn-archive,
+        .btn-cancel {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="archive-card">
+        <div class="card-header-archive">
+            <h2>
+                <i class="fas fa-archive"></i>
+                Archivar Documento - Folio: {{ documento.folio }}
+            </h2>
+        </div>
+        
+        <div class="card-body-archive">
+            
+            <div class="document-info">
+                <p>
+                    <i class="fas fa-file-alt"></i>
+                    <strong>Folio de Salida:</strong> {{ documento.folio_salida }}
+                </p>
+                <p>
+                    <i class="fas fa-user"></i>
+                    <strong>Remitente:</strong> {{ documento.remitente }}
+                </p>
+                <p>
+                    <i class="fas fa-align-left"></i>
+                    <strong>Asunto:</strong> {{ documento.asunto }}
+                </p>
+            </div>
+
+            <div class="format-section">
+                <h4 class="format-title">
+                    <i class="fas fa-print"></i>
+                    Seleccione el Formato de Impresión
+                </h4>
+
+                <form method="post" id="archiveForm">
+                    {% csrf_token %}
+                    
+                    <div class="format-options">
+                        <!-- Opción Memorándum -->
+                        <div class="format-option" onclick="selectFormat(this, 'memorandum')">
+                            <input type="radio" name="formato" value="memorandum" id="formato_memorandum" checked>
+                            <label for="formato_memorandum">
+                                <div class="format-name">
+                                    <i class="fas fa-file-alt"></i>
+                                    Memorándum (Media Carta)
+                                </div>
+                                <ul class="format-details">
+                                    <li><strong>Tamaño:</strong> Media Carta</li>
+                                    <li><strong>Fuente:</strong> Arial Narrow 10pt</li>
+                                    <li><strong>Márgenes:</strong> Sup: 1.25cm, Inf: 1.5cm, Izq: 6.5cm, Der: 1.6cm</li>
+                                    <li><strong>Uso:</strong> Documentos internos oficiales</li>
+                                </ul>
+                            </label>
+                        </div>
+
+                        <!-- Opción Carta -->
+                        <div class="format-option" onclick="selectFormat(this, 'carta')">
+                            <input type="radio" name="formato" value="carta" id="formato_carta">
+                            <label for="formato_carta">
+                                <div class="format-name">
+                                    <i class="fas fa-file"></i>
+                                    Carta (Tamaño Completo)
+                                </div>
+                                <ul class="format-details">
+                                    <li><strong>Tamaño:</strong> Carta completa</li>
+                                    <li><strong>Fuente:</strong> Arial 11pt</li>
+                                    <li><strong>Márgenes:</strong> Sup: 1.75cm, Inf: 1.5cm, Izq: 5.5cm, Der: 1.5cm</li>
+                                    <li><strong>Uso:</strong> Comunicaciones formales externas</li>
+                                </ul>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="action-buttons">
+                        <button type="submit" class="btn-archive">
+                            <i class="fas fa-print"></i>
+                            Generar PDF y Archivar
+                        </button>
+                        <a href="{% url 'core:dashboard_secretaria' %}" class="btn-cancel">
+                            <i class="fas fa-times-circle"></i>
+                            Cancelar
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function selectFormat(element, formato) {
+    // Remover selección de todas las opciones
+    document.querySelectorAll('.format-option').forEach(opt => {
+        opt.classList.remove('selected');
+    });
+    
+    // Marcar la opción seleccionada
+    element.classList.add('selected');
+    
+    // Marcar el radio button correspondiente
+    document.getElementById('formato_' + formato).checked = true;
+}
+
+// Marcar la opción por defecto al cargar
+document.addEventListener('DOMContentLoaded', function() {
+    const defaultOption = document.querySelector('.format-option');
+    if (defaultOption) {
+        defaultOption.classList.add('selected');
+    }
+});
+
+// Confirmación antes de enviar
+document.getElementById('archiveForm').addEventListener('submit', function(e) {
+    const formato = document.querySelector('input[name="formato"]:checked').value;
+    const formatoTexto = formato === 'memorandum' ? 'Memorándum (Media Carta)' : 'Carta (Tamaño Completo)';
+    
+    if (!confirm(`¿Confirma que desea generar el documento en formato ${formatoTexto} y archivar el folio {{ documento.folio }}?`)) {
+        e.preventDefault();
+        return false;
+    }
+});
+</script>
+{% endblock %}

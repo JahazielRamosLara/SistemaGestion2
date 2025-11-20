@@ -422,26 +422,57 @@ def turnar_documento(request, pk):
 @user_passes_test(is_secretaria)
 @transaction.atomic
 def archivar_documento(request, pk):
-
-    documento = get_object_or_404(Documento, pk = pk)
+    
+    documento = get_object_or_404(Documento, pk=pk)
 
     if documento.estatus_actual.nombre != "En Firma":
         messages.error(request, "Error: Solo documentos en estado 'En Firma' pueden ser archivados.")
         return redirect("core:dashboard_secretaria")
     
-    try:
-        estatus_archivado = Estatus.objects.get(nombre = "Archivado")
-        documento.estatus_actual = estatus_archivado
-        documento.save()
-
-        messages.success(request, f"Folio {documento.folio} archivado con éxito.")
-
-    except Estatus.DoesNotExist:
-        messages.error(request, "Error interno: El estatus 'Archivado' no existe.")
+    # Si es POST, procesar la impresión y archivado
+    if request.method == "POST":
+        formato = request.POST.get('formato', 'memorandum')
         
-        return redirect("core:dashboard_secretaria")
+        # Obtener los datos necesarios del documento
+        try:
+            # Aquí necesitamos obtener el asunto_salida y contenido_respuesta
+            # Estos deberían estar guardados en algún lugar del documento
+            # Por ahora usaremos campos del documento
+            asunto_salida = documento.asunto  # o el campo donde guardaste el asunto de salida
+            contenido_respuesta = request.POST.get('contenido_respuesta', '')  # o de donde lo guardes
+            
+            # Generar el PDF según el formato seleccionado
+            if formato == 'memorandum':
+                from .utils import generar_pdf_salida
+                pdf_content = generar_pdf_salida(documento, asunto_salida, contenido_respuesta)
+            else:  # carta
+                from .utils import generar_pdf_salida_carta
+                pdf_content = generar_pdf_salida_carta(documento, asunto_salida, contenido_respuesta)
+            
+            # Crear respuesta HTTP para descargar el PDF
+            from django.http import HttpResponse
+            response = HttpResponse(pdf_content, content_type='application/pdf')
+            response['Content-Disposition'] = f'inline; filename="documento_{documento.folio_salida}.pdf"'
+            
+            # Cambiar estado a Archivado
+            estatus_archivado = Estatus.objects.get(nombre="Archivado")
+            documento.estatus_actual = estatus_archivado
+            documento.save()
+            
+            messages.success(request, f"Folio {documento.folio} archivado con éxito.")
+            
+            # Retornar el PDF para impresión
+            return response
+            
+        except Exception as e:
+            messages.error(request, f"Error al generar el documento: {str(e)}")
+            return redirect("core:dashboard_secretaria")
     
-    return redirect("core:dashboard_secretaria")
+    # Si es GET, mostrar opciones de formato
+    context = {
+        'documento': documento
+    }
+    return render(request, "core/archivar_documento.html", context)
 
 @user_passes_test(is_secretaria)
 @transaction.atomic
@@ -464,6 +495,8 @@ def generar_salida(request, pk):
             
             # Asignar folio y fecha automática
             documento.folio_salida = folio_salida
+            documento.asunto_salida = asunto_salida  
+            documento.contenido_respuesta = contenido_respuesta
             documento.fecha_salida = date.today()
             
             # Generar el PDF con el nuevo parámetro asunto_salida

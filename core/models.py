@@ -106,6 +106,19 @@ class Documento(models.Model):
         verbose_name = "Folio de Salida"
     )
     
+    asunto_salida = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True,
+        verbose_name="Asunto de Salida"
+    )
+    
+    contenido_respuesta = models.TextField(
+        null=True,
+        blank=True,
+        verbose_name="Contenido de la Respuesta"
+    )
+    
     def todos_enviaron_resumen(self):
         """Verifica si todos los responsables (principal + adicionales) enviaron su resumen"""
     # Total de responsables = principal (1) + adicionales
