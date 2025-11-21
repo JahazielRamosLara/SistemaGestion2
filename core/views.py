@@ -25,25 +25,27 @@ from datetime import date
 # Create your views here.
 
 def is_secretaria(user):
-
     if user.is_authenticated:
         return user.groups.filter(name = "Secretaria").exists()
     return False
 
 def is_responsable(user):
-    
-    return user.groups.filter(name = "Responsable").exists()
+    if user.is_authenticated:
+        return user.groups.filter(name = "Responsable").exists()
+    return False
 
 class CapturaDocumentoView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
     
     model = Documento
-    #fields = ["folio", "remitente", "asunto", "resumen", "archivo_pdf", "responsable", "responsables_adicionales"]
     form_class = CapturaDocumentoForm
     template_name = "core/captura_documento.html"
     success_url = reverse_lazy('core:dashboard_secretaria')
+    
+    # Configuración de LoginRequiredMixin
+    login_url = '/login/'  # Redirigir a login si no está autenticado
+    redirect_field_name = 'next'
 
     def test_func(self):
-        
         return is_secretaria(self.request.user)
     
     def get_form_kwargs(self):
@@ -51,15 +53,12 @@ class CapturaDocumentoView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
         return kwargs
     
     def get_context_data(self, **kwargs):
-
         context = super().get_context_data(**kwargs)
         remitente_form = RemitenteForm()
         context["remitente_form"] = remitente_form
-
         return context
 
     def form_valid(self, form):
-
         self.object = form.save(commit=False)
         self.object.captura_por = self.request.user 
         
@@ -97,8 +96,6 @@ class CapturaDocumentoView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
         correo_enviado = enviar_notificacion_documento(self.object, todos_responsables)
         nombres_adicionales = ", ".join([user.username for user in responsables_adicionales])
 
-        nombres_adicionales = ", ".join([user.username for user in responsables_adicionales])
-
         if responsables_adicionales:
             mensaje = f'Documento {self.object.folio} capturado. Notificado a {self.object.responsable.username} y a {nombres_adicionales}.'
         else:
@@ -110,21 +107,21 @@ class CapturaDocumentoView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
             mensaje += " No se pudieron enviar los correos (verifica que los usuarios tengan email)."
 
         messages.success(self.request, mensaje)
-
         return super().form_valid(form)
     
 class DashboardSecretariaView(LoginRequiredMixin, UserPassesTestMixin, ListView):
-
     model = Documento
     template_name = "core/dashboard_secretaria.html"
     context_object_name = "documentos"
+    
+    # Configuración de LoginRequiredMixin
+    login_url = '/login/'
+    redirect_field_name = 'next'
 
     def test_func(self):
-        
         return is_secretaria(self.request.user)
     
     def get_queryset(self):
-        
         vista = self.request.GET.get("vista", "pendientes")
 
         if vista == "historial":
@@ -134,9 +131,9 @@ class DashboardSecretariaView(LoginRequiredMixin, UserPassesTestMixin, ListView)
                 ).order_by("-id")
         else:
             estados_pendientes = ["Capturado", "Notificado", "En Trámite", "Turnado", "Contestar por memo", "En Firma"]
-        return Documento.objects.filter(
-            estatus_actual__nombre__in = estados_pendientes
-        ).order_by("-id")
+            return Documento.objects.filter(
+                estatus_actual__nombre__in = estados_pendientes
+            ).order_by("-id")
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -144,10 +141,13 @@ class DashboardSecretariaView(LoginRequiredMixin, UserPassesTestMixin, ListView)
         return context
     
 class DashboardResponsableView(LoginRequiredMixin, UserPassesTestMixin, ListView):
-
     model = Documento
     template_name = "core/dashboard_responsable.html"
     context_object_name = "documentos"
+    
+    # Configuración de LoginRequiredMixin
+    login_url = '/login/'
+    redirect_field_name = 'next'
 
     def test_func(self):
         return is_responsable(self.request.user)
@@ -165,7 +165,6 @@ class DashboardResponsableView(LoginRequiredMixin, UserPassesTestMixin, ListView
                 estatus_actual__nombre__in = estados_finalizados
             ).order_by("-id")
         else:
-            
             estados_pendientes = ["Capturado", "Notificado", "En Trámite", "Turnado", "Contestar por memo", "En Firma"]
             return base_query.filter(
                 estatus_actual__nombre__in = estados_pendientes
@@ -177,33 +176,35 @@ class DashboardResponsableView(LoginRequiredMixin, UserPassesTestMixin, ListView
         return context
     
 class DetalleDocumentoView(LoginRequiredMixin, DetailView):
-    
     model = Documento
     template_name = "core/detalle_documento.html"
     context_object_name = "documento"
+    
+    # Configuración de LoginRequiredMixin
+    login_url = '/login/'
+    redirect_field_name = 'next'
 
 class RemitenteListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
-
     model = Remitente
     template_name = "core/gestion_remitentes.html"
     context_object_name = "remitentes"
+    
+    # Configuración de LoginRequiredMixin
+    login_url = '/login/'
+    redirect_field_name = 'next'
 
     def test_func(self):
-
         return is_secretaria(self.request.user)
     
     def get_queryset(self):
-        
         return Remitente.objects.all().order_by("pk")
     
     def get_context_data(self, **kwargs):
-
         context = super().get_context_data(**kwargs)
         context["form"] = RemitenteForm()
         return super().get_context_data(**kwargs)
     
     def post(self, request, *args, **kwargs):
-       
         form = RemitenteForm(request.POST)
         if form.is_valid():
             form.save()
@@ -214,11 +215,13 @@ class RemitenteListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
         context['form'] = form
         return self.render_to_response(context)
 
-@method_decorator(csrf_exempt, name = "dispatch") # Solo para simplificar, usa @csrf_protect en producción
+@method_decorator(csrf_exempt, name = "dispatch")
+@method_decorator(login_required, name="dispatch")  # AGREGADO: Proteger con login
 class RemitenteToggleActivoView(LoginRequiredMixin, View):
+    login_url = '/login/'
+    redirect_field_name = 'next'
 
     def post(self, request, pk):
-
         remitente = get_object_or_404(Remitente, pk = pk)
         remitente.activo = not remitente.activo
         remitente.save()
@@ -229,11 +232,14 @@ class RemitenteToggleActivoView(LoginRequiredMixin, View):
         })
     
 class RemitenteCreateView(LoginRequiredMixin, CreateView):
-
     model = Remitente
     form_class = RemitenteForm
     template_name = "core/remitente_modal.html"
     success_url = reverse_lazy("core:captura_documento")
+    
+    # Configuración de LoginRequiredMixin
+    login_url = '/login/'
+    redirect_field_name = 'next'
     
     def form_valid(self, form):
         instance = form.save(commit=False)
@@ -246,49 +252,19 @@ class RemitenteCreateView(LoginRequiredMixin, CreateView):
                 "id": instance.id, 
                 "nombre": full_name
             })
-    
         return super().form_valid(form)
     
     def form_invalid(self, form):
-
         if self.request.headers.get("x-requested-with") == "XMLHttpRequest":
-            
             error_message = form.errors.as_text()
-            
             return JsonResponse(
                 {'error': error_message}, 
                 status=400 
             )
-        
         return super().form_invalid(form)
-    
-"""@user_passes_test(is_secretaria)
-@transaction.atomic
-def notificar_documento(request, pk):
 
-    documento = get_object_or_404(Documento, pk = pk)
-
-    if documento.estatus_actual.nombre != "Capturado":
-        messages.error(request, "Error: El documento ya fue notificado o tiene otro estado")
-        return redirect("core:detalle_documento", pk = pk)
-    
-    estatus_notificado = Estatus.objects.get(nombre = "Notificado")
-    documento.estatus_actual = estatus_notificado
-    documento.save()
-
-    if documento.responsable and documento.responsable.email:
-        send_mail(
-            subject = f"Oficio asignado - Folio {documento.folio}",
-            message = f"Se le ha asignado el oficio: {documento.asunto}.",
-            from_email = "jachachel@gmail.com",
-            recipient_list = [documento.responsable.email],
-            fail_silently = False
-        )
-    
-    messages.success(request, f"Folio {documento.folio} notificado con éxito.")
-    return redirect("core:dashboard_secretaria")
-"""
-@user_passes_test(is_responsable)
+@login_required(login_url='/login/')  # AGREGADO: Especificar URL de login
+@user_passes_test(is_responsable, login_url='/login/')  # AGREGADO: Redirigir si no pasa el test
 @transaction.atomic
 def iniciar_tramite(request, pk):
     documento = get_object_or_404(Documento, pk=pk)
@@ -360,7 +336,8 @@ def iniciar_tramite(request, pk):
     }
     return render(request, "core/iniciar_tramite.html", context)
 
-@user_passes_test(is_responsable)
+@login_required(login_url='/login/')
+@user_passes_test(is_responsable, login_url='/login/')
 @transaction.atomic
 def devolver_para_contestar(request, pk):
     documento = get_object_or_404(Documento, pk=pk)
@@ -388,12 +365,11 @@ def devolver_para_contestar(request, pk):
         messages.error(request, "Error: El estatus de destino no existe.")
     
     return redirect("core:dashboard_responsable")
-    
 
-@user_passes_test(is_responsable)
+@login_required(login_url='/login/')
+@user_passes_test(is_responsable, login_url='/login/')
 @transaction.atomic
 def turnar_documento(request, pk):
-
     documento = get_object_or_404(Documento, pk = pk)
 
     estado_actual = documento.estatus_actual.nombre
@@ -418,11 +394,11 @@ def turnar_documento(request, pk):
         form = TurnarDocumentoForm()
 
     return render(request, "core/turnar_documento.html", {"form": form, "documento": documento})
-    
-@user_passes_test(is_secretaria)
+
+@login_required(login_url='/login/')
+@user_passes_test(is_secretaria, login_url='/login/')
 @transaction.atomic
 def archivar_documento(request, pk):
-    
     documento = get_object_or_404(Documento, pk=pk)
 
     if documento.estatus_actual.nombre != "En Firma":
@@ -435,11 +411,8 @@ def archivar_documento(request, pk):
         
         # Obtener los datos necesarios del documento
         try:
-            # Aquí necesitamos obtener el asunto_salida y contenido_respuesta
-            # Estos deberían estar guardados en algún lugar del documento
-            # Por ahora usaremos campos del documento
-            asunto_salida = documento.asunto  # o el campo donde guardaste el asunto de salida
-            contenido_respuesta = request.POST.get('contenido_respuesta', '')  # o de donde lo guardes
+            asunto_salida = documento.asunto
+            contenido_respuesta = request.POST.get('contenido_respuesta', '')
             
             # Generar el PDF según el formato seleccionado
             if formato == 'memorandum':
@@ -474,10 +447,10 @@ def archivar_documento(request, pk):
     }
     return render(request, "core/archivar_documento.html", context)
 
-@user_passes_test(is_secretaria)
+@login_required(login_url='/login/')
+@user_passes_test(is_secretaria, login_url='/login/')
 @transaction.atomic
 def generar_salida(request, pk):
-    
     documento = get_object_or_404(Documento, pk=pk)
 
     if documento.estatus_actual.nombre != "Contestar por memo":
@@ -528,20 +501,18 @@ def generar_salida(request, pk):
     
     return render(request, "core/generar_salida.html", context)
 
-@login_required
+@login_required(login_url='/login/')  # AGREGADO
 def home_redirect(request):
-
     if is_secretaria(request.user):
         return redirect("core:dashboard_secretaria")
     elif is_responsable(request.user):
         return redirect("core:dashboard_responsable")
     else:
         return redirect("/admin/")
-    
-@login_required
-@user_passes_test(lambda u: u.groups.filter(name='Secretaria').exists())
+
+@login_required(login_url='/login/')
+@user_passes_test(lambda u: u.groups.filter(name='Secretaria').exists(), login_url='/login/')
 def desactivar_remitente(request, pk):
-    
     if request.method == 'POST':
         remitente = get_object_or_404(Remitente, pk=pk)
         remitente.activo = False 

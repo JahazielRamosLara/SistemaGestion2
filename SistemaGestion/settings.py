@@ -32,6 +32,11 @@ DEBUG = config('DEBUG', default=True, cast=bool)
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1').split(',')
 
 
+# DETECCIÓN AUTOMÁTICA DE AMBIENTE
+
+ENVIRONMENT = config('ENVIRONMENT', default='development')
+IS_PRODUCTION = ENVIRONMENT == 'production'
+
 # Application definition
 
 INSTALLED_APPS = [
@@ -105,6 +110,9 @@ AUTH_PASSWORD_VALIDATORS = [
     },
     {
         "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
+        "OPTIONS": {
+            "min_length": 8,  
+        }
     },
     {
         "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
@@ -135,9 +143,17 @@ USE_TZ = True
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+
+
+# CONFIGURACIÓN DE LOGIN Y AUTENTICACIÓN
+
 LOGIN_URL = "/login/"
-LOGIN_REDIRECT_URL = "/"
-LOGOUT_REDIRECT_URL = "login"
+LOGIN_REDIRECT_URL = "/"  
+LOGOUT_REDIRECT_URL = "/login/"  
+
+
+
+# CONFIGURACIÓN DE EMAIL
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = "smtp.gmail.com"
@@ -147,8 +163,60 @@ EMAIL_HOST_USER = config("EMAIL_HOST_USER")
 EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD")
 DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL", default=EMAIL_HOST_USER)
 
-SESSION_COOKIE_AGE = 7200
-SESSION_EXPIRE_AT_BROWSER_CLOSE = False
+
+
+# CONFIGURACIÓN DE SEGURIDAD - COOKIES
+
+# Las cookies de sesión solo son accesibles por HTTP (no JavaScript)
+SESSION_COOKIE_HTTPONLY = True
+
+# Las cookies de CSRF solo son accesibles por HTTP
+CSRF_COOKIE_HTTPONLY = True
+
+# Protección contra clickjacking
+X_FRAME_OPTIONS = 'DENY'
+
+
+
+# CONFIGURACIONES QUE CAMBIAN SEGÚN EL AMBIENTE
+
+if IS_PRODUCTION:
+    # CONFIGURACIÓN DE PRODUCCIÓN 
+    
+    # HTTPS/SSL
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_SSL_REDIRECT = True
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+    
+    # HSTS (HTTP Strict Transport Security)
+    SECURE_HSTS_SECONDS = 31536000  # 1 año
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+    
+    # Sesiones más estrictas en producción
+    SESSION_COOKIE_AGE = 1800  # 30 minutos
+    SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+    
+else:
+    # CONFIGURACIÓN DE DESARROLLO 
+    
+    
+    # No forzar HTTPS en desarrollo local
+    SESSION_COOKIE_SECURE = False
+    CSRF_COOKIE_SECURE = False
+    SECURE_SSL_REDIRECT = False
+    
+    # Sesiones más largas en desarrollo (para comodidad)
+    SESSION_COOKIE_AGE = 3600  # 1 hora
+    SESSION_EXPIRE_AT_BROWSER_CLOSE = False
+
+# Siempre renovar la sesión en cada request (en ambos ambientes)
+SESSION_SAVE_EVERY_REQUEST = True
+
+
+
+# CONFIGURACIÓN DE ARCHIVOS ESTÁTICOS Y MEDIA
 
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap4" 
 CRISPY_TEMPLATE_PACK = "bootstrap4"
@@ -158,16 +226,6 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 STATIC_URL = "/static/"
 STATICFILES_DIRS = [
-    BASE_DIR / 'core' / 'static',  # O la ruta donde están tus archivos estáticos
+    BASE_DIR / 'core' / 'static',
 ]
 STATIC_ROOT = BASE_DIR / 'staticfiles'
-
-SECURE_SLL_REDIRECT = True
-SESSION_COOLIE_SECURE = True
-CSRF_COOKIE_SECURE = True
-SECURE_HSTS_SECONDS = 31536000
-SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-SECURE_PROXY_SLL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
-
-SESSION_COOKIE_HTTPONLY = True
-CSRF_COOKIE_HTTPONLY = True
